@@ -1,45 +1,28 @@
-* {
-  box-sizing: border-box;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 35%;
+  --border: 0 0% 82%;
+  --input: 0 0% 82%;
+  --ring: 0 0% 0%;
+  --primary: 0 0% 0%;
+  --primary-foreground: 0 0% 100%;
+  --radius: 0.5rem;
 }
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-  background: #fff;
-  color: #000;
-  font-family: "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-}
+@layer base {
+  * {
+    @apply border-border;
+  }
 
-main {
-  padding: 16px;
-}
-
-h1 {
-  margin: 0 0 8px 0;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-p {
-  margin: 8px 0;
-}
-
-button {
-  margin: 8px 0;
-  padding: 6px 10px;
-  border: 1px solid #000;
-  background: #fff;
-  color: #000;
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.error {
-  color: #000;
-  font-weight: 600;
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+      Helvetica, Arial, sans-serif;
+  }
 }

@@ -4,6 +4,8 @@ Current status:
 - Vite + React + TypeScript skeleton created.
 - Health-check UI wired to `http://127.0.0.1:8765/health`.
 - `src-tauri` placeholder config added for Tauri v2.
+- Tailwind + shadcn-style UI foundation added (`components.json`, `tailwind.config.ts`).
+- Base reusable UI primitive added: `src/components/ui/button.tsx`.
 
 Prerequisites to run full desktop stack:
 - Node.js + npm
@@ -16,3 +18,8 @@ Frontend-only local run:
 1. `cd apps/desktop`
 2. `npm install`
 3. `npm run dev`
+
+Tauri local run:
+1. `cd apps/desktop`
+2. `npm install`
+3. `npm run tauri dev`

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { LoaderCircle } from "lucide-react";
 
 type HealthResponse = {
   status: string;
@@ -46,30 +48,41 @@ export default function App() {
   }, []);
 
   return (
-    <main>
-      <h1>Remnis</h1>
-      <p>Health check</p>
+    <main className="mx-auto max-w-2xl p-5">
+      <header className="mb-4 flex items-center justify-between border-b pb-3">
+        <h1>Remnis</h1>
+        <Button
+          onClick={() => void fetchHealth()}
+          disabled={loading}
+          size="sm"
+          className="w-[78px]"
+        >
+          {loading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : "Refresh"}
+        </Button>
+      </header>
 
-      <button onClick={() => void fetchHealth()} disabled={loading}>
-        {loading ? "Checking..." : "Check Sidecar /health"}
-      </button>
-
-      {error && <p className="error">Sidecar unavailable: {error}</p>}
-
-      {health && (
-        <>
-          <p><strong>Status:</strong> {health.status}</p>
-          <p><strong>Service:</strong> {health.service}</p>
-          <p><strong>Version:</strong> {health.version}</p>
-          <p><strong>Time (UTC):</strong> {health.time_utc}</p>
-          <p>
-            <strong>Readiness:</strong>
-            {` observer=${String(health.readiness.observer_ready)}, db=${String(
-              health.readiness.db_ready
-            )}, embedder=${String(health.readiness.embedder_ready)}`}
-          </p>
-        </>
-      )}
+      <section className="space-y-2">
+        {error && <p className="text-sm font-medium">Sidecar unavailable: {error}</p>}
+        {!error && !health && <p className="text-sm">No data yet.</p>}
+        {health && (
+          <dl className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-2 text-sm">
+            <dt className="uppercase tracking-wide text-muted-foreground">Status</dt>
+            <dd>{health.status}</dd>
+            <dt className="uppercase tracking-wide text-muted-foreground">Service</dt>
+            <dd>{health.service}</dd>
+            <dt className="uppercase tracking-wide text-muted-foreground">Version</dt>
+            <dd>{health.version}</dd>
+            <dt className="uppercase tracking-wide text-muted-foreground">Time (UTC)</dt>
+            <dd>{health.time_utc}</dd>
+            <dt className="uppercase tracking-wide text-muted-foreground">Observer</dt>
+            <dd>{health.readiness.observer_ready ? "ready" : "not ready"}</dd>
+            <dt className="uppercase tracking-wide text-muted-foreground">Database</dt>
+            <dd>{health.readiness.db_ready ? "ready" : "not ready"}</dd>
+            <dt className="uppercase tracking-wide text-muted-foreground">Embedder</dt>
+            <dd>{health.readiness.embedder_ready ? "ready" : "not ready"}</dd>
+          </dl>
+        )}
+      </section>
     </main>
   );
 }
