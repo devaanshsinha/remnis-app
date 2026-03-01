@@ -28,3 +28,6 @@ venv/
 
 # Logs
 *.log
+
+# Remnis runtime data
+sidecar/data/

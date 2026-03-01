@@ -4,6 +4,7 @@
 - FastAPI app is implemented under `sidecar/app`.
 - `GET /health` endpoint is live and consumed by desktop app.
 - `POST /ingest` endpoint is implemented with in-memory dedupe/debounce decisions.
+- `GET /observer/stats` endpoint is available for observer diagnostics.
 - Background observer loop is implemented (`app/observer.py`) and starts on app startup.
 - CORS allows local dev frontend origins on port `5173`.
 - Step 1 schema module is implemented:
@@ -11,7 +12,7 @@
   - context hash helpers in `app/hash_utils.py`
 
 ## Key Files
-- `app/main.py` - FastAPI app with health/ingest endpoints and observer lifecycle
+- `app/main.py` - FastAPI app with health/ingest/stats endpoints and observer lifecycle
 - `app/observer.py` - active-window polling loop and event emission
 - `app/schemas.py` - canonical data contracts and normalization helpers
 - `app/hash_utils.py` - SHA-256 context hash compute/verify helpers
@@ -27,4 +28,3 @@
 ## Current Contract Note
 - `observer_ready` should become `true` when observer capture loop is functioning.
 - `db_ready` and `embedder_ready` remain `false` until those modules are implemented.
-

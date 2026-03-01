@@ -4,6 +4,16 @@ Remnis is a local work memory app for macOS developers.
 
 It is designed to help you find past context quickly, such as the terminal error from earlier, the file you edited, or the browser tab you used while solving a bug. All core processing is intended to run locally on your machine.
 
+## Why This App Exists
+
+Developer context is fragmented across editors, terminals, browsers, chat tools, and docs. Remnis is being built to reduce context loss and recovery time by creating a searchable local memory layer of your workflow.
+
+## Who It Is For
+
+- Developers who switch between many tools throughout the day
+- Builders who lose track of where they solved a specific issue
+- People who want intent-based recall without sending data to a cloud service
+
 ## What The App Does
 
 - Watches your active window context on macOS
@@ -20,6 +30,13 @@ It is designed to help you find past context quickly, such as the terminal error
 - Observer v1 active-window capture loop
 - Basic dedupe and debounce behavior in memory
 - Tailwind + shadcn-style UI foundation for future screens
+
+## What Users Will Be Able To Do
+
+- Search for intent like "that docker build error from this morning"
+- Recover where and when a task was performed
+- Resume work with context snippets and timestamps
+- Keep all capture and indexing local to the machine
 
 ## What Is Not Implemented Yet
 
@@ -66,3 +83,9 @@ npm run tauri dev
 - `docs/PROJECT_STATUS.md` current status and open items
 - `docs/NEXT_ACTIONS.md` next implementation steps
 - `docs/RULES.md` working rules for the project
+
+## Privacy Approach
+
+- No cloud dependency is required for core functionality.
+- Sidecar API is local (`127.0.0.1`) for development.
+- The target product direction is local-first storage and retrieval.

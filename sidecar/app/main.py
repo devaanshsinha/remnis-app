@@ -1,4 +1,6 @@
 from datetime import datetime, timezone
+from pathlib import Path
+import threading
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -15,6 +17,7 @@ from .schemas import (
     HealthResponse,
     IngestRequest,
     IngestResponse,
+    ObserverStatsResponse,
     ObservedContextEvent,
 )
 
@@ -37,6 +40,10 @@ _last_stored_timestamp_utc: datetime | None = None
 _stored_count = 0
 _skipped_count = 0
 _observer: ActiveWindowObserver | None = None
+_state_lock = threading.Lock()
+
+DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+EVENTS_JSONL = DATA_DIR / "events.jsonl"
 
 
 def _error_payload(code: str, message: str, details: dict[str, Any] | None = None) -> dict:
@@ -79,6 +86,24 @@ def health() -> HealthResponse:
     )
 
 
+@app.get("/observer/stats", response_model=ObserverStatsResponse)
+def observer_stats() -> ObserverStatsResponse:
+    observer_ready = _observer.is_ready() if _observer else False
+    last_error = _observer.last_error() if _observer else "observer not started"
+    with _state_lock:
+        return ObserverStatsResponse(
+            observer_ready=observer_ready,
+            last_error=last_error,
+            stored_count=_stored_count,
+            skipped_count=_skipped_count,
+            last_stored_timestamp_utc=(
+                _last_stored_timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+                if _last_stored_timestamp_utc
+                else None
+            ),
+        )
+
+
 def process_ingest_event(event: ObservedContextEvent) -> IngestResponse | JSONResponse:
     global _last_stored_hash
     global _last_stored_timestamp_utc
@@ -112,12 +137,14 @@ def process_ingest_event(event: ObservedContextEvent) -> IngestResponse | JSONRe
     debounce = DebounceDecision(is_debounced=is_debounced, reason=debounce_reason)
     should_skip = dedupe.is_duplicate or debounce.is_debounced
 
-    if should_skip:
-        _skipped_count += 1
-    else:
-        _stored_count += 1
-        _last_stored_hash = event.context_hash
-        _last_stored_timestamp_utc = event.timestamp_utc
+    with _state_lock:
+        if should_skip:
+            _skipped_count += 1
+        else:
+            _stored_count += 1
+            _last_stored_hash = event.context_hash
+            _last_stored_timestamp_utc = event.timestamp_utc
+            _persist_stored_event(event)
 
     return IngestResponse(
         status="skipped" if should_skip else "stored",
@@ -145,6 +172,7 @@ def _on_observer_event(event: ObservedContextEvent) -> None:
 @app.on_event("startup")
 async def on_startup() -> None:
     global _observer
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
     _observer = ActiveWindowObserver(on_event=_on_observer_event)
     _observer.start()
 
@@ -158,3 +186,9 @@ async def on_shutdown() -> None:
 @app.post("/ingest", response_model=IngestResponse)
 def ingest(payload: IngestRequest) -> IngestResponse | JSONResponse:
     return process_ingest_event(payload.event)
+
+
+def _persist_stored_event(event: ObservedContextEvent) -> None:
+    with EVENTS_JSONL.open("a", encoding="utf-8") as handle:
+        handle.write(event.model_dump_json())
+        handle.write("\n")

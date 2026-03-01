@@ -76,6 +76,15 @@ class HealthResponse(BaseModel):
     readiness: HealthReadiness
 
 
+class ObserverStatsResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    observer_ready: bool
+    last_error: str | None = None
+    stored_count: int
+    skipped_count: int
+    last_stored_timestamp_utc: str | None = None
+
+
 def normalize_for_hash(event: ObservedContextEvent) -> dict[str, Any]:
     return {
         "app_name": " ".join(event.app_name.strip().lower().split()),
