@@ -3,6 +3,7 @@
 ## Status Update
 - Step 1 (Freeze Contracts): completed in `docs/CONTRACTS.md`.
 - Step 2 (Acceptance Criteria): completed in `docs/ACCEPTANCE_CRITERIA.md`.
+- Step 3 (Permission and Failure Behavior): completed in `docs/FAILURE_BEHAVIOR.md`.
 
 ## 1. Freeze Contracts
 What to do:

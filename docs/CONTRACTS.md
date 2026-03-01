@@ -204,3 +204,7 @@ Derived in UI:
   - bump version marker,
   - note in `docs/PROJECT_STATUS.md`.
 
+
+## 7. Failure Mode References
+Failure semantics and retry policy are defined in `docs/FAILURE_BEHAVIOR.md`.
+Any API-level change there must remain compatible with the error shape in section 3.4.

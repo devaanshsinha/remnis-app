@@ -8,6 +8,7 @@ This file defines objective pass/fail gates for implementation phases.
 3. `GET /health` returns `200` with `status` and `readiness` fields.
 4. Desktop can read and render sidecar readiness state.
 5. Desktop shutdown cleanly terminates sidecar process.
+6. Desktop shows a non-blocking unavailable state when health checks fail.
 
 ## Phase 2: Observer v1 (No Embeddings)
 1. Observer emits app/window events at runtime.
@@ -15,6 +16,7 @@ This file defines objective pass/fail gates for implementation phases.
 3. Deduplication skips repeated `context_hash` entries.
 4. Ingest API returns `stored` and `skipped` statuses correctly.
 5. Event timestamps are UTC ISO-8601 and validated.
+6. Missing Accessibility permission is surfaced as a user-visible degraded state.
 
 ## Phase 3: Storage and Semantic Search
 1. LanceDB table initializes on first run and reopens on restart.
@@ -39,4 +41,3 @@ This file defines objective pass/fail gates for implementation phases.
 
 ## Exit Rule
 A phase is complete only when every criterion in that phase is demonstrably satisfied.
-

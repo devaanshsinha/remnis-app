@@ -22,6 +22,7 @@ This repo is intentionally initialized with structure and documentation first, b
 - `docs/NEXT_ACTIONS.md` - immediate next actions with purpose and output
 - `docs/CONTRACTS.md` - frozen event and API contracts (`v0.1`)
 - `docs/ACCEPTANCE_CRITERIA.md` - objective pass/fail gates per phase
+- `docs/FAILURE_BEHAVIOR.md` - failure modes, degraded states, and recovery policy
 
 ## Scaffolding Status
 

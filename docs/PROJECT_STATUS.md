@@ -20,6 +20,7 @@
   - `docs/NEXT_ACTIONS.md`
   - `docs/CONTRACTS.md`
   - `docs/ACCEPTANCE_CRITERIA.md`
+  - `docs/FAILURE_BEHAVIOR.md`
 
 ## Current Intent
 - Use finalized documentation as source of truth for initial scaffolding.
@@ -28,7 +29,6 @@
 ## Open Items
 - Decide initial desktop-to-sidecar integration approach.
 - Decide initial storage flow before/after embeddings.
-- Document explicit failure behavior details in contracts or a dedicated runbook.
 
 ## Risks to Manage Early
 - macOS permission complexity (Accessibility and related constraints).
