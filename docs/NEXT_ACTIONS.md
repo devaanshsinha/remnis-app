@@ -4,6 +4,7 @@
 - Step 1 (Freeze Contracts): completed in `docs/CONTRACTS.md`.
 - Step 2 (Acceptance Criteria): completed in `docs/ACCEPTANCE_CRITERIA.md`.
 - Step 3 (Permission and Failure Behavior): completed in `docs/FAILURE_BEHAVIOR.md`.
+- Step 4 (Minimal Scaffolding + `/health`): completed with skeletons in `apps/desktop` and `sidecar`.
 
 ## 1. Freeze Contracts
 What to do:

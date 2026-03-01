@@ -26,10 +26,12 @@ This repo is intentionally initialized with structure and documentation first, b
 
 ## Scaffolding Status
 
-- Desktop app: not scaffolded yet
-- Python sidecar: not scaffolded yet
+- Desktop app: skeleton created (`apps/desktop`)
+- Python sidecar: skeleton created with `/health` (`sidecar/app/main.py`)
 
 ## Recommended Next Step
 
-Contracts and acceptance criteria are now documented.
-Next move: scaffold desktop and sidecar skeletons, then wire a minimal `/health` handshake.
+Run and verify the scaffold locally:
+1. Install Python sidecar deps and start sidecar on `127.0.0.1:8765`.
+2. Install desktop deps and run the frontend to verify `/health` display.
+3. Install Rust toolchain (`cargo`) to enable Tauri runtime.
