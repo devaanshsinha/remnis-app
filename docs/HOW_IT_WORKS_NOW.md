@@ -25,8 +25,9 @@ This describes the code that exists today, not future architecture.
 ## 2. Sidecar Layer (`sidecar`)
 - Stack: FastAPI skeleton.
 - Entry: `sidecar/app/main.py`.
-- Exposed endpoint:
+- Exposed endpoints:
   - `GET /health` returns `status`, `service`, `version`, `time_utc`, and readiness flags.
+  - `POST /ingest` validates event schema, verifies `context_hash`, and returns `stored/skipped` with dedupe/debounce decisions.
 - Dev CORS is enabled for:
   - `http://localhost:5173`
   - `http://127.0.0.1:5173`
@@ -37,6 +38,11 @@ This describes the code that exists today, not future architecture.
 - `embedder_ready=false`
 
 These are expected until observer/database/embedding modules are implemented.
+
+### Current ingest semantics
+- Dedupe compares incoming `context_hash` with last stored hash.
+- Debounce uses a 15-second window against last stored timestamp.
+- Decisions are in-memory only for now (no DB persistence yet).
 
 ## 3. Tauri Layer (`apps/desktop/src-tauri`)
 - Minimal Tauri v2 scaffold exists:
@@ -58,4 +64,3 @@ These are expected until observer/database/embedding modules are implemented.
 2. Start desktop:
    - `cd apps/desktop`
    - `npm run tauri dev` (or `npm run dev` for frontend-only)
-

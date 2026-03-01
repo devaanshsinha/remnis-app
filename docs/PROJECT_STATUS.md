@@ -16,6 +16,7 @@
   - `docs/ACCEPTANCE_CRITERIA.md`
 - Implemented baseline runtime:
   - sidecar FastAPI app with `GET /health`
+  - sidecar `POST /ingest` with schema/hash validation + in-memory dedupe/debounce decisions
   - desktop app with startup + manual health check request
   - Tauri scaffold with valid icon and build wiring
 - Added UI foundation:
@@ -28,7 +29,6 @@
 
 ## Open Items
 - Implement observer capture logic and event normalization.
-- Implement `POST /ingest` API and dedupe/debounce outcomes.
 - Decide initial local persistence path before LanceDB semantic phase.
 
 ## Risks to Manage Early
@@ -38,4 +38,3 @@
 
 ## Next Gate
 - Complete Phase 2 acceptance criteria in `docs/ACCEPTANCE_CRITERIA.md`.
-
