@@ -2,39 +2,27 @@
 
 ## Snapshot
 - Date: 2026-03-01
-- Repo state: documentation + runnable baseline scaffold
-- Code scaffolding state: desktop/sidecar health-check loop is working
+- Repo state: runnable local observer + ingest + persistence + keyword search baseline
 
 ## Completed So Far
 - Established repository structure (`apps/desktop`, `sidecar`, `docs`).
-- Finalized foundational docs:
-  - `requirements.md`
-  - `docs/RULES.md`
-  - `docs/CONTEXT.md`
-  - `docs/CONTRACTS.md`
-  - `docs/FAILURE_BEHAVIOR.md`
-  - `docs/ACCEPTANCE_CRITERIA.md`
-- Implemented baseline runtime:
-  - sidecar FastAPI app with `GET /health`
-  - sidecar `POST /ingest` with schema/hash validation + in-memory dedupe/debounce decisions
-  - desktop app with startup + manual health check request
-  - Tauri scaffold with valid icon and build wiring
-- Implemented Phase 2 observer v1 core:
-  - background active-window polling loop (`app/observer.py`)
-  - startup/shutdown observer lifecycle wiring in sidecar
-  - observer events routed through ingest pipeline
-- Added UI foundation:
-  - Tailwind config and CSS tokens
-  - shadcn-compatible setup (`components.json`)
-  - reusable `Button` primitive
+- Finalized foundational docs and contracts.
+- Implemented sidecar runtime:
+  - `GET /health`
+  - `POST /ingest` with schema/hash validation and dedupe/debounce
+  - observer v1 active-window polling loop
+  - `GET /observer/stats` degraded-state diagnostics
+  - JSONL persistence (`sidecar/data/events.jsonl`)
+  - `GET /search` keyword fallback over persisted events
+- Implemented desktop runtime baseline and UI foundation.
 
 ## Current Intent
-- Finish Phase 2 by validating observer behavior and permission/degraded handling.
+- Start Phase 3 semantic retrieval work while preserving existing local pipeline.
 
 ## Open Items
-- Validate observer behavior under missing permissions and denied automation.
-- Add minimal persistence path for stored events.
-- Implement `/search` and LanceDB integration in Phase 3.
+- Replace keyword `/search` scoring with embedding + LanceDB retrieval.
+- Add structured persistence/index schema for vector workflow.
+- Integrate search results into the final Spotlight-style HUD.
 
 ## Risks to Manage Early
 - macOS permission complexity (Accessibility/AX behavior).
@@ -42,5 +30,5 @@
 - Packaging complexity for sidecar distribution.
 
 ## Next Gate
-- Complete all Phase 2 acceptance criteria in `docs/ACCEPTANCE_CRITERIA.md`.
+- Semantic `/search` returning embedding-ranked results from LanceDB.
 

@@ -78,11 +78,34 @@ class HealthResponse(BaseModel):
 
 class ObserverStatsResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    observer_state: str
     observer_ready: bool
     last_error: str | None = None
+    last_error_code: str | None = None
     stored_count: int
     skipped_count: int
     last_stored_timestamp_utc: str | None = None
+
+
+class SearchResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    id: UUID
+    timestamp_utc: str
+    app_name: str
+    window_title: str
+    context_text: str
+    score: float
+    context_hash: str
+    source_version: str
+
+
+class SearchResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    query: str
+    k: int
+    offset: int
+    total_estimate: int
+    results: list[SearchResult]
 
 
 def normalize_for_hash(event: ObservedContextEvent) -> dict[str, Any]:

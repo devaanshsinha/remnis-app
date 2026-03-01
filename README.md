@@ -27,8 +27,11 @@ Developer context is fragmented across editors, terminals, browsers, chat tools,
 - Sidecar service with FastAPI
 - `GET /health` endpoint with readiness flags
 - `POST /ingest` endpoint with schema validation and hash checks
+- `GET /observer/stats` endpoint with observer diagnostics
+- `GET /search` endpoint with local keyword ranking
 - Observer v1 active-window capture loop
-- Basic dedupe and debounce behavior in memory
+- Dedupe and debounce behavior in ingest pipeline
+- Local JSONL persistence for stored events
 - Tailwind + shadcn-style UI foundation for future screens
 
 ## What Users Will Be Able To Do
@@ -40,9 +43,8 @@ Developer context is fragmented across editors, terminals, browsers, chat tools,
 
 ## What Is Not Implemented Yet
 
-- Persistent event storage
 - Embedding generation and LanceDB integration
-- Semantic `/search` endpoint
+- Semantic `/search` ranking
 - Full Spotlight-style HUD and global hotkey UX
 
 ## Repository Layout

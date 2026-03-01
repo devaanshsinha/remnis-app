@@ -44,6 +44,7 @@ class ActiveWindowObserver:
         self._lock = threading.Lock()
         self._ready = False
         self._last_error: str | None = None
+        self._last_error_code: str | None = None
 
         self._current_context: WindowContext | None = None
         self._current_started_at: float | None = None
@@ -69,26 +70,47 @@ class ActiveWindowObserver:
         with self._lock:
             return self._last_error
 
+    def last_error_code(self) -> str | None:
+        with self._lock:
+            return self._last_error_code
+
     def _set_ready(self, ready: bool) -> None:
         with self._lock:
             self._ready = ready
 
-    def _set_error(self, err: str | None) -> None:
+    def _set_error(self, err: str | None, code: str | None = None) -> None:
         with self._lock:
             self._last_error = err
+            self._last_error_code = code
 
     def _run_loop(self) -> None:
         while not self._stop_event.is_set():
             try:
                 snapshot = self._capture_active_window()
                 self._set_ready(True)
-                self._set_error(None)
+                self._set_error(None, None)
                 self._process_snapshot(snapshot)
             except Exception as exc:  # noqa: BLE001
+                err_code, err_msg = self._classify_capture_error(str(exc))
                 self._set_ready(False)
-                self._set_error(str(exc))
+                self._set_error(err_msg, err_code)
             finally:
                 self._stop_event.wait(self._poll_interval_seconds)
+
+    @staticmethod
+    def _classify_capture_error(raw_message: str) -> tuple[str, str]:
+        lowered = raw_message.lower()
+        if (
+            "not authorized to send apple events" in lowered
+            or "not allowed assistive access" in lowered
+            or "(-1743)" in lowered
+        ):
+            return ("permission_denied", "Accessibility or Automation permission denied")
+        if "empty response" in lowered:
+            return ("capture_empty", "Observer capture returned empty response")
+        if "observer capture failed" in lowered:
+            return ("capture_failed", raw_message)
+        return ("observer_error", raw_message)
 
     def _process_snapshot(self, snapshot: WindowContext) -> None:
         now_monotonic = time.monotonic()
