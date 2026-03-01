@@ -19,17 +19,22 @@
   - sidecar `POST /ingest` with schema/hash validation + in-memory dedupe/debounce decisions
   - desktop app with startup + manual health check request
   - Tauri scaffold with valid icon and build wiring
+- Implemented Phase 2 observer v1 core:
+  - background active-window polling loop (`app/observer.py`)
+  - startup/shutdown observer lifecycle wiring in sidecar
+  - observer events routed through ingest pipeline
 - Added UI foundation:
   - Tailwind config and CSS tokens
   - shadcn-compatible setup (`components.json`)
   - reusable `Button` primitive
 
 ## Current Intent
-- Build Phase 2 observer pipeline (capture + debounce + dedupe) on top of the working health-check backbone.
+- Finish Phase 2 by validating observer behavior and permission/degraded handling.
 
 ## Open Items
-- Implement observer capture logic and event normalization.
-- Decide initial local persistence path before LanceDB semantic phase.
+- Validate observer behavior under missing permissions and denied automation.
+- Add minimal persistence path for stored events.
+- Implement `/search` and LanceDB integration in Phase 3.
 
 ## Risks to Manage Early
 - macOS permission complexity (Accessibility/AX behavior).
@@ -37,4 +42,5 @@
 - Packaging complexity for sidecar distribution.
 
 ## Next Gate
-- Complete Phase 2 acceptance criteria in `docs/ACCEPTANCE_CRITERIA.md`.
+- Complete all Phase 2 acceptance criteria in `docs/ACCEPTANCE_CRITERIA.md`.
+

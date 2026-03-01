@@ -23,26 +23,26 @@ This describes the code that exists today, not future architecture.
 - The refresh button triggers the same health fetch manually.
 
 ## 2. Sidecar Layer (`sidecar`)
-- Stack: FastAPI skeleton.
+- Stack: FastAPI + background observer loop.
 - Entry: `sidecar/app/main.py`.
+- Observer module: `sidecar/app/observer.py`.
 - Exposed endpoints:
-  - `GET /health` returns `status`, `service`, `version`, `time_utc`, and readiness flags.
-  - `POST /ingest` validates event schema, verifies `context_hash`, and returns `stored/skipped` with dedupe/debounce decisions.
-- Dev CORS is enabled for:
-  - `http://localhost:5173`
-  - `http://127.0.0.1:5173`
+  - `GET /health` returns status metadata and readiness flags.
+  - `POST /ingest` validates event schema/hash and returns `stored/skipped` decisions.
+
+### Current observer behavior (v1)
+- Polls active frontmost app/window title via macOS `osascript`.
+- Emits events when:
+  - current context remains stable for >=15 seconds, or
+  - context changes significantly (app or title change).
+- Emits contract-shaped events with computed `context_hash`.
+- Feeds events through ingest dedupe/debounce logic in-memory.
 
 ### Current readiness semantics
-- `observer_ready=false`
+- `observer_ready=true` when capture loop is successfully polling.
+- `observer_ready=false` when capture fails (e.g. permissions/automation issues).
 - `db_ready=false`
 - `embedder_ready=false`
-
-These are expected until observer/database/embedding modules are implemented.
-
-### Current ingest semantics
-- Dedupe compares incoming `context_hash` with last stored hash.
-- Debounce uses a 15-second window against last stored timestamp.
-- Decisions are in-memory only for now (no DB persistence yet).
 
 ## 3. Tauri Layer (`apps/desktop/src-tauri`)
 - Minimal Tauri v2 scaffold exists:
@@ -51,10 +51,10 @@ These are expected until observer/database/embedding modules are implemented.
 - App can run through `npm run tauri dev` once JS dependencies are installed.
 
 ## 4. What Is Not Implemented Yet
-- Observer capture logic (active window monitoring).
-- Ingest endpoint and dedupe/debounce pipeline.
+- Persistent storage for ingest events.
 - LanceDB integration.
 - Embedding model integration.
+- `/search` API and ranking.
 - HUD command palette and global hotkey flow.
 
 ## 5. Quick Run Sequence
@@ -64,3 +64,4 @@ These are expected until observer/database/embedding modules are implemented.
 2. Start desktop:
    - `cd apps/desktop`
    - `npm run tauri dev` (or `npm run dev` for frontend-only)
+

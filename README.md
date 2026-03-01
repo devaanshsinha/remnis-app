@@ -1,43 +1,68 @@
 # Remnis
 
-Privacy-first, local-first work-memory engine for macOS.
+Remnis is a local work memory app for macOS developers.
 
-## Current Structure
+It is designed to help you find past context quickly, such as the terminal error from earlier, the file you edited, or the browser tab you used while solving a bug. All core processing is intended to run locally on your machine.
 
-- `apps/desktop` - Tauri + Vite + React + TypeScript desktop app
-- `sidecar` - Python FastAPI sidecar service
-- `docs` - architecture, contracts, status, and runbooks
-- `requirements.md` - product + engineering requirements baseline
+## What The App Does
 
-## Current Implementation Status
+- Watches your active window context on macOS
+- Normalizes and deduplicates context events
+- Exposes a local API for ingest and search workflows
+- Provides a desktop UI that talks to the local sidecar
 
-- Desktop app runs and calls sidecar `GET /health`.
-- Sidecar `GET /health` endpoint is live with readiness flags.
-- Tauri scaffold is present and runnable with installed dependencies.
-- Tailwind + shadcn-style UI foundation is set up in desktop app.
+## What Is Implemented Right Now
 
-## Documentation Index
+- Desktop app scaffold with Tauri + React + TypeScript
+- Sidecar service with FastAPI
+- `GET /health` endpoint with readiness flags
+- `POST /ingest` endpoint with schema validation and hash checks
+- Observer v1 active-window capture loop
+- Basic dedupe and debounce behavior in memory
+- Tailwind + shadcn-style UI foundation for future screens
 
-- `requirements.md` - canonical requirements and constraints
-- `docs/RULES.md` - working rules and guardrails
-- `docs/CONTEXT.md` - system-level context and mental model
-- `docs/CONTRACTS.md` - frozen event and API contracts (`v0.1`)
-- `docs/FAILURE_BEHAVIOR.md` - failure modes, degraded states, retry policy
-- `docs/ACCEPTANCE_CRITERIA.md` - objective pass/fail gates per phase
-- `docs/HOW_IT_WORKS_NOW.md` - current code behavior and runtime flow
-- `docs/PROJECT_STATUS.md` - what has been done and what is next
-- `docs/NEXT_ACTIONS.md` - action list and progress markers
+## What Is Not Implemented Yet
 
-## Run (Current)
+- Persistent event storage
+- Embedding generation and LanceDB integration
+- Semantic `/search` endpoint
+- Full Spotlight-style HUD and global hotkey UX
 
-Sidecar:
-1. `cd sidecar`
-2. `python3 -m venv .venv`
-3. `.venv/bin/pip install fastapi 'uvicorn[standard]'`
-4. `.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8765 --reload`
+## Repository Layout
 
-Desktop:
-1. `cd apps/desktop`
-2. `npm install`
-3. `npm run tauri dev`
+- `apps/desktop` desktop application code
+- `sidecar` local FastAPI sidecar service
+- `docs` design docs, contracts, status, and runbooks
+- `requirements.md` high-level product and engineering requirements
 
+## Getting Started
+
+### 1. Start sidecar
+
+```bash
+cd sidecar
+python3 -m venv .venv
+.venv/bin/python -m pip install -U pip
+.venv/bin/python -m pip install fastapi pydantic 'uvicorn[standard]'
+.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8765 --reload
+```
+
+### 2. Start desktop app
+
+```bash
+cd apps/desktop
+npm install
+npm run tauri dev
+```
+
+## Documentation
+
+- `requirements.md` baseline product and engineering requirements
+- `docs/CONTEXT.md` system context and mental model
+- `docs/CONTRACTS.md` event and API contract definitions
+- `docs/FAILURE_BEHAVIOR.md` degraded modes and recovery behavior
+- `docs/ACCEPTANCE_CRITERIA.md` phase completion criteria
+- `docs/HOW_IT_WORKS_NOW.md` current implementation details
+- `docs/PROJECT_STATUS.md` current status and open items
+- `docs/NEXT_ACTIONS.md` next implementation steps
+- `docs/RULES.md` working rules for the project

@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .hash_utils import is_context_hash_valid
+from .observer import ActiveWindowObserver
 from .schemas import (
     DebounceDecision,
     DedupeDecision,
@@ -14,6 +15,7 @@ from .schemas import (
     HealthResponse,
     IngestRequest,
     IngestResponse,
+    ObservedContextEvent,
 )
 
 app = FastAPI(title="Remnis Sidecar", version="0.1.0")
@@ -32,6 +34,9 @@ app.add_middleware(
 DEBOUNCE_WINDOW_SECONDS = 15.0
 _last_stored_hash: str | None = None
 _last_stored_timestamp_utc: datetime | None = None
+_stored_count = 0
+_skipped_count = 0
+_observer: ActiveWindowObserver | None = None
 
 
 def _error_payload(code: str, message: str, details: dict[str, Any] | None = None) -> dict:
@@ -60,25 +65,25 @@ async def validation_exception_handler(
 
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
+    observer_ready = _observer.is_ready() if _observer else False
     return HealthResponse(
         status="ok",
         service="remnis-sidecar",
         version="0.1.0",
         time_utc=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         readiness=HealthReadiness(
-            observer_ready=False,
+            observer_ready=observer_ready,
             db_ready=False,
             embedder_ready=False,
         ),
     )
 
 
-@app.post("/ingest", response_model=IngestResponse)
-def ingest(payload: IngestRequest) -> IngestResponse | JSONResponse:
+def process_ingest_event(event: ObservedContextEvent) -> IngestResponse | JSONResponse:
     global _last_stored_hash
     global _last_stored_timestamp_utc
-
-    event = payload.event
+    global _stored_count
+    global _skipped_count
 
     if not is_context_hash_valid(event):
         return JSONResponse(
@@ -107,7 +112,10 @@ def ingest(payload: IngestRequest) -> IngestResponse | JSONResponse:
     debounce = DebounceDecision(is_debounced=is_debounced, reason=debounce_reason)
     should_skip = dedupe.is_duplicate or debounce.is_debounced
 
-    if not should_skip:
+    if should_skip:
+        _skipped_count += 1
+    else:
+        _stored_count += 1
         _last_stored_hash = event.context_hash
         _last_stored_timestamp_utc = event.timestamp_utc
 
@@ -117,3 +125,36 @@ def ingest(payload: IngestRequest) -> IngestResponse | JSONResponse:
         dedupe=dedupe,
         debounce=debounce,
     )
+
+
+def _on_observer_event(event: ObservedContextEvent) -> None:
+    response = process_ingest_event(event)
+    if isinstance(response, JSONResponse):
+        return
+
+    print(
+        "[observer]",
+        response.status,
+        event.app_name,
+        "|",
+        event.window_title,
+        f"(stored={_stored_count}, skipped={_skipped_count})",
+    )
+
+
+@app.on_event("startup")
+async def on_startup() -> None:
+    global _observer
+    _observer = ActiveWindowObserver(on_event=_on_observer_event)
+    _observer.start()
+
+
+@app.on_event("shutdown")
+async def on_shutdown() -> None:
+    if _observer:
+        _observer.stop()
+
+
+@app.post("/ingest", response_model=IngestResponse)
+def ingest(payload: IngestRequest) -> IngestResponse | JSONResponse:
+    return process_ingest_event(payload.event)

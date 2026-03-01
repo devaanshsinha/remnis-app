@@ -5,6 +5,7 @@
 - Step 2 (Acceptance Criteria): completed in `docs/ACCEPTANCE_CRITERIA.md`.
 - Step 3 (Permission and Failure Behavior): completed in `docs/FAILURE_BEHAVIOR.md`.
 - Step 4 (Minimal Scaffolding + `/health`): completed with running desktop/sidecar health checks.
+- Step 5 (Observer v1): in progress; active-window polling + emit pipeline is implemented.
 
 ## 5. Build Observer v1 (No Embeddings Yet)
 What to do:
@@ -40,4 +41,3 @@ Why:
 
 What it produces:
 - Usable desktop experience and demonstrable MVP.
-
