@@ -49,6 +49,12 @@ Think of Remnis as a pipeline:
 - Observer captures useful low-noise events.
 - Search can return plausible prior events for natural language queries.
 
+## Current Implemented Slice
+- Desktop app can start and fetch sidecar health.
+- Sidecar returns contract-shaped health response with readiness flags.
+- UI stack already includes Tailwind + shadcn-compatible primitives for future screens.
+- Observer/ingest/search logic is not implemented yet.
+
 ## Where Confusion Usually Happens
 - IPC vs HTTP: Tauri commands call Rust functions; sidecar API is local HTTP. You can combine both.
 - Raw events vs indexed events: raw capture may happen before embeddings are ready.
@@ -61,4 +67,3 @@ If unsure, simplify the pipeline and keep visibility high:
 - log debounce/dedupe decisions
 - log indexing outcomes
 - expose readiness in `/health`
-

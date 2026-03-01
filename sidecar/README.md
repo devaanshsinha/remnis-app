@@ -1,22 +1,21 @@
 # Python Sidecar
 
-Current status:
-- FastAPI skeleton created under `sidecar/app`.
-- `GET /health` endpoint implemented in `app/main.py`.
-- Dev runner script added: `sidecar/run_dev.sh`.
+## Current Status
+- FastAPI skeleton is implemented under `sidecar/app`.
+- `GET /health` endpoint is live and consumed by desktop app.
+- CORS allows local dev frontend origins on port `5173`.
 
-Responsibilities:
-- macOS observer integration (PyObjC)
-- Ingest + dedupe + debounce pipeline
-- Embedding generation
-- LanceDB persistence
-- FastAPI local search API
+## Key Files
+- `app/main.py` - FastAPI app and health endpoint
+- `pyproject.toml` - dependency and project metadata
+- `run_dev.sh` - convenience dev runner
 
-Local run:
+## Local Run
 1. `cd sidecar`
 2. `python3 -m venv .venv`
 3. `.venv/bin/pip install fastapi 'uvicorn[standard]'`
 4. `.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8765 --reload`
 
-Current limitation in this environment:
-- Network is restricted, so dependency install could not be completed here.
+## Current Contract Note
+- Readiness flags are intentionally `false` until observer/db/embedder modules are implemented.
+

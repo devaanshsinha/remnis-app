@@ -1,25 +1,27 @@
 # Desktop App
 
-Current status:
-- Vite + React + TypeScript skeleton created.
-- Health-check UI wired to `http://127.0.0.1:8765/health`.
-- `src-tauri` placeholder config added for Tauri v2.
-- Tailwind + shadcn-style UI foundation added (`components.json`, `tailwind.config.ts`).
-- Base reusable UI primitive added: `src/components/ui/button.tsx`.
+## Current Status
+- Vite + React + TypeScript app is running.
+- Tauri v2 scaffold is present and runnable.
+- Health-check UI calls sidecar `GET /health`.
+- Tailwind + shadcn-style foundation is configured.
 
-Prerequisites to run full desktop stack:
-- Node.js + npm
-- Rust toolchain (`cargo`) for Tauri runtime
+## Key Files
+- `src/main.tsx` - frontend entry point
+- `src/App.tsx` - current health-check screen
+- `src/styles.css` - Tailwind directives + token values
+- `src/components/ui/button.tsx` - reusable Button primitive
+- `src/lib/utils.ts` - `cn` utility
+- `src-tauri/tauri.conf.json` - Tauri app config
+- `src-tauri/src/main.rs` - Tauri runtime entry
 
-Current limitation in this environment:
-- `cargo` is not installed, so Tauri runtime is not runnable yet.
+## Local Run
+1. `cd apps/desktop`
+2. `npm install`
+3. `npm run tauri dev`
 
-Frontend-only local run:
+Frontend-only:
 1. `cd apps/desktop`
 2. `npm install`
 3. `npm run dev`
 
-Tauri local run:
-1. `cd apps/desktop`
-2. `npm install`
-3. `npm run tauri dev`
