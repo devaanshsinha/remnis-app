@@ -27,6 +27,9 @@ Notes:
 2. Enable `Developer mode`
 3. Click `Load unpacked`
 4. Select `integrations/browser-extension/chromium`
+5. Click the extension icon to open popup and use the capture on/off switch.
+
+If you already loaded the extension and changed source files, click `Reload` on the extension card.
 
 ## Production Distribution Options
 

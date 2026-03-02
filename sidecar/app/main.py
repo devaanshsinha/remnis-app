@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import threading
 from typing import Any
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from uuid import uuid4
 
@@ -43,14 +44,12 @@ app.add_middleware(
 
 
 DEBOUNCE_WINDOW_SECONDS = 15.0
-BROWSER_EXTENSION_SUPPRESSION_SECONDS = 20.0
 _last_stored_hash: str | None = None
 _last_stored_timestamp_utc: datetime | None = None
 _stored_count = 0
 _skipped_count = 0
 _observer: ActiveWindowObserver | None = None
 _state_lock = threading.Lock()
-_recent_extension_browser_events: dict[str, datetime] = {}
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 EVENTS_JSONL = DATA_DIR / "events.jsonl"
@@ -150,65 +149,48 @@ def _is_browser_app(app_name: str) -> bool:
     )
 
 
-def _normalize_browser_title(raw: str) -> str:
-    normalized = " ".join(raw.strip().split()).lower()
-    suffixes = [
-        " - google chrome",
-        " - chrome",
-        " - brave",
-        " - microsoft edge",
-        " - edge",
-        " - arc",
-        " - firefox",
-        " - safari",
-    ]
-    changed = True
-    while changed:
-        changed = False
-        for suffix in suffixes:
-            if normalized.endswith(suffix):
-                normalized = normalized[: -len(suffix)].strip()
-                changed = True
-    return normalized
+def _normalize_url(raw_url: str) -> str:
+    parsed = urlparse(raw_url.strip())
+    if not parsed.scheme or not parsed.netloc:
+        return raw_url.strip()
 
+    blocked_query_prefixes = ("utm_",)
+    blocked_query_keys = {
+        "fbclid",
+        "gclid",
+        "dclid",
+        "mc_cid",
+        "mc_eid",
+        "igshid",
+        "ref",
+        "ref_src",
+    }
+    clean_items: list[tuple[str, str]] = []
+    for key, value in parse_qsl(parsed.query, keep_blank_values=True):
+        lowered = key.lower()
+        if lowered in blocked_query_keys:
+            continue
+        if any(lowered.startswith(prefix) for prefix in blocked_query_prefixes):
+            continue
+        clean_items.append((key, value))
+    clean_query = urlencode(clean_items, doseq=True)
 
-def _browser_event_key(event: ObservedContextEvent) -> str:
-    app_key = event.app_name.strip().lower()
-    title_key = _normalize_browser_title(event.window_title)
-    return f"{app_key}::{title_key}"
-
-
-def _is_extension_browser_event(event: ObservedContextEvent) -> bool:
-    if event.source != EventSource.ACCESSIBILITY_TEXT:
-        return False
-    if not event.file_path:
-        return False
-    return event.file_path.startswith("http://") or event.file_path.startswith("https://")
-
-
-def _prune_recent_extension_events(now_utc: datetime) -> None:
-    stale_keys = [
-        key
-        for key, seen_at in _recent_extension_browser_events.items()
-        if (now_utc - seen_at).total_seconds() > BROWSER_EXTENSION_SUPPRESSION_SECONDS
-    ]
-    for key in stale_keys:
-        _recent_extension_browser_events.pop(key, None)
+    return urlunparse(
+        (
+            parsed.scheme.lower(),
+            parsed.netloc.lower(),
+            parsed.path,
+            parsed.params,
+            clean_query,
+            parsed.fragment,
+        )
+    )
 
 
 def _should_skip_observer_browser_event(event: ObservedContextEvent) -> bool:
     if event.source != EventSource.ACTIVE_WINDOW:
         return False
-    if not _is_browser_app(event.app_name):
-        return False
-
-    key = _browser_event_key(event)
-    seen_at = _recent_extension_browser_events.get(key)
-    if seen_at is None:
-        return False
-
-    age_seconds = abs((event.timestamp_utc - seen_at).total_seconds())
-    return age_seconds <= BROWSER_EXTENSION_SUPPRESSION_SECONDS
+    return _is_browser_app(event.app_name)
 
 
 def _search_score(event: dict[str, Any], query_tokens: list[str]) -> float:
@@ -330,19 +312,18 @@ def process_ingest_event(event: ObservedContextEvent) -> IngestResponse | JSONRe
             ),
         )
 
-    with _state_lock:
-        _prune_recent_extension_events(event.timestamp_utc)
-        if _should_skip_observer_browser_event(event):
+    if _should_skip_observer_browser_event(event):
+        with _state_lock:
             _skipped_count += 1
-            return IngestResponse(
-                status="skipped",
-                event_id=event.id,
-                dedupe=DedupeDecision(is_duplicate=False, reason=None),
-                debounce=DebounceDecision(
-                    is_debounced=True,
-                    reason="browser_extension_preferred",
-                ),
-            )
+        return IngestResponse(
+            status="skipped",
+            event_id=event.id,
+            dedupe=DedupeDecision(is_duplicate=False, reason=None),
+            debounce=DebounceDecision(
+                is_debounced=True,
+                reason="browser_capture_disabled_in_observer",
+            ),
+        )
 
     is_duplicate = _last_stored_hash is not None and event.context_hash == _last_stored_hash
     dedupe = DedupeDecision(
@@ -369,8 +350,6 @@ def process_ingest_event(event: ObservedContextEvent) -> IngestResponse | JSONRe
             _last_stored_hash = event.context_hash
             _last_stored_timestamp_utc = event.timestamp_utc
             _persist_stored_event(event)
-            if _is_extension_browser_event(event):
-                _recent_extension_browser_events[_browser_event_key(event)] = event.timestamp_utc
 
     return IngestResponse(
         status="skipped" if should_skip else "stored",
@@ -418,13 +397,15 @@ def ingest(payload: IngestRequest) -> IngestResponse | JSONResponse:
 def ingest_browser(payload: BrowserIngestRequest) -> IngestResponse | JSONResponse:
     browser_event = payload.event
     snippet = (browser_event.snippet or "").strip()
+    normalized_url = _normalize_url(browser_event.url)
+    normalized_prev_url = _normalize_url(browser_event.prev_url) if browser_event.prev_url else None
     context_text_parts = [
         browser_event.app_name.strip(),
         browser_event.page_title.strip(),
-        browser_event.url.strip(),
+        normalized_url,
     ]
-    if browser_event.prev_url:
-        context_text_parts.append(f"from:{browser_event.prev_url.strip()}")
+    if normalized_prev_url:
+        context_text_parts.append(f"from:{normalized_prev_url}")
     if browser_event.tab_id is not None:
         context_text_parts.append(f"tab:{browser_event.tab_id}")
     if browser_event.window_id is not None:
@@ -438,7 +419,7 @@ def ingest_browser(payload: BrowserIngestRequest) -> IngestResponse | JSONRespon
         timestamp_utc=browser_event.timestamp_utc,
         app_name=browser_event.app_name.strip(),
         window_title=browser_event.window_title.strip(),
-        file_path=browser_event.url.strip(),
+        file_path=normalized_url,
         context_text=context_text,
         source="observer.accessibility_text",
         capture_confidence=0.98,

@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "description": "Sends active tab context to local Remnis sidecar.",
   "permissions": [
-    "tabs"
+    "tabs",
+    "storage"
   ],
   "host_permissions": [
     "http://127.0.0.1:8765/*",
@@ -14,6 +15,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Remnis Adapter"
+    "default_title": "Remnis Adapter",
+    "default_popup": "popup.html"
   }
 }

@@ -1,8 +1,26 @@
 const SIDECAR_ENDPOINT = "http://127.0.0.1:8765/ingest/browser";
 const APP_NAME = "Google Chrome";
 const MIN_RESEND_INTERVAL_MS = 3000;
+const CAPTURE_ENABLED_KEY = "captureEnabled";
 
 const lastSentByTab = new Map();
+
+function getCaptureEnabled() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(CAPTURE_ENABLED_KEY, (result) => {
+      resolve(result[CAPTURE_ENABLED_KEY] ?? true);
+    });
+  });
+}
+
+function setBadgeForCaptureEnabled(enabled) {
+  if (enabled) {
+    chrome.action.setBadgeText({ text: "" });
+    return;
+  }
+  chrome.action.setBadgeBackgroundColor({ color: "#111111" });
+  chrome.action.setBadgeText({ text: "OFF" });
+}
 
 function shouldIgnoreUrl(url) {
   if (!url) return true;
@@ -38,6 +56,11 @@ function shouldSend(tab) {
 }
 
 async function postTabEvent(tab) {
+  const enabled = await getCaptureEnabled();
+  if (!enabled) {
+    return;
+  }
+
   if (!tab || tab.id === undefined || shouldIgnoreUrl(tab.url)) {
     return;
   }
@@ -94,4 +117,27 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
     if (!tabs.length) return;
     void postTabEvent(tabs[0]);
   });
+});
+
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.local.get(CAPTURE_ENABLED_KEY, (result) => {
+    const enabled = result[CAPTURE_ENABLED_KEY];
+    if (enabled === undefined) {
+      chrome.storage.local.set({ [CAPTURE_ENABLED_KEY]: true }, () => {
+        setBadgeForCaptureEnabled(true);
+      });
+      return;
+    }
+    setBadgeForCaptureEnabled(Boolean(enabled));
+  });
+});
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName !== "local") return;
+  if (!changes[CAPTURE_ENABLED_KEY]) return;
+  setBadgeForCaptureEnabled(Boolean(changes[CAPTURE_ENABLED_KEY].newValue));
+});
+
+getCaptureEnabled().then((enabled) => {
+  setBadgeForCaptureEnabled(Boolean(enabled));
 });
