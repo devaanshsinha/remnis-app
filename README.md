@@ -51,6 +51,7 @@ Developer context is fragmented across editors, terminals, browsers, chat tools,
 
 - `apps/desktop` desktop application code
 - `sidecar` local FastAPI sidecar service
+- `integrations` external adapters (for example browser extension)
 - `docs` design docs, contracts, status, and runbooks
 - `requirements.md` high-level product and engineering requirements
 
@@ -73,6 +74,13 @@ cd apps/desktop
 npm install
 npm run tauri dev
 ```
+
+### 3. Optional: load browser adapter in Chromium
+
+1. Open `chrome://extensions`
+2. Enable `Developer mode`
+3. Click `Load unpacked`
+4. Select `integrations/browser-extension/chromium`
 
 ## Documentation
 
