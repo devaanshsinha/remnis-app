@@ -17,9 +17,18 @@
 - Implemented desktop runtime baseline and UI foundation.
 
 ## Current Intent
-- Start Phase 3 semantic retrieval work while preserving existing local pipeline.
+- Build robustness through capture-source expansion while progressing semantic retrieval.
+
+## Strategic Decisions (Locked)
+- Capture quality is the primary product risk and priority.
+- Browser adapter is the next high-value source integration.
+- Runtime architecture will use two tiers:
+  - lightweight always-on background processing
+  - heavier query-time processing only on user invoke
 
 ## Open Items
+- Implement browser adapter ingest path (URL/title/snippet).
+- Define clipboard + notification event schema extensions.
 - Replace keyword `/search` scoring with embedding + LanceDB retrieval.
 - Add structured persistence/index schema for vector workflow.
 - Integrate search results into the final Spotlight-style HUD.
@@ -31,4 +40,3 @@
 
 ## Next Gate
 - Semantic `/search` returning embedding-ranked results from LanceDB.
-

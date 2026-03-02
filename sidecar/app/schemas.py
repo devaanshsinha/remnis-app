@@ -40,6 +40,29 @@ class IngestRequest(BaseModel):
     event: ObservedContextEvent
 
 
+class BrowserCaptureEvent(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    timestamp_utc: datetime
+    app_name: str = Field(min_length=1)
+    window_title: str = Field(min_length=1)
+    url: str = Field(min_length=1)
+    page_title: str = Field(min_length=1)
+    snippet: str | None = None
+    source_version: str = Field(pattern=r"^event\.v1$")
+
+    @field_validator("timestamp_utc")
+    @classmethod
+    def _validate_browser_timestamp_utc(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            raise ValueError("timestamp_utc must include timezone")
+        return value.astimezone(timezone.utc)
+
+
+class BrowserIngestRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    event: BrowserCaptureEvent
+
+
 class DedupeDecision(BaseModel):
     model_config = ConfigDict(extra="forbid")
     is_duplicate: bool

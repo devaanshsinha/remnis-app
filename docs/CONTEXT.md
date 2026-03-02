@@ -21,6 +21,14 @@ Think of Remnis as a pipeline:
 5. Persist vectors + metadata.
 6. Query semantically and render results quickly.
 
+## Strategy Clarification
+- The hardest part of this product is reliable, high-signal capture across sources.
+- Embeddings and heavier models improve retrieval quality, but they cannot compensate for poor capture.
+- Product strategy is now explicitly:
+  - capture-first architecture
+  - lightweight background processing
+  - heavier query-time reasoning when the user explicitly invokes Remnis
+
 ## Data Flow (Initial)
 1. Observer identifies active app/window.
 2. Event is normalized to canonical schema.
@@ -53,7 +61,15 @@ Think of Remnis as a pipeline:
 - Desktop app can start and fetch sidecar health.
 - Sidecar returns contract-shaped health response with readiness flags.
 - UI stack already includes Tailwind + shadcn-compatible primitives for future screens.
-- Observer/ingest/search logic is not implemented yet.
+- Observer/ingest/search logic is implemented at baseline level:
+  - observer v1 active-window capture
+  - ingest dedupe/debounce
+  - JSONL persistence
+  - keyword search fallback endpoint
+
+## Planned Source Expansion
+- Browser adapter is the next high-value source (URL/title/snippet).
+- Clipboard and notification capture follow to improve cross-app recall robustness.
 
 ## Where Confusion Usually Happens
 - IPC vs HTTP: Tauri commands call Rust functions; sidecar API is local HTTP. You can combine both.

@@ -4,6 +4,7 @@
 - FastAPI app is implemented under `sidecar/app`.
 - `GET /health` endpoint is live and consumed by desktop app.
 - `POST /ingest` endpoint is implemented with dedupe/debounce decisions.
+- `POST /ingest/browser` endpoint is available for browser adapter payloads.
 - `GET /observer/stats` endpoint is available for observer diagnostics.
 - `GET /search` endpoint is available as a keyword fallback over local persisted events.
 - Background observer loop is implemented (`app/observer.py`) and starts on app startup.
@@ -30,4 +31,4 @@
 - `db_ready` and `embedder_ready` remain `false` until those modules are implemented.
 - `/observer/stats` includes `observer_state` and `last_error_code` for degraded-state diagnostics.
 - `/search` currently uses keyword scoring and will be replaced by semantic ranking in the embedding/LanceDB phase.
-
+- `/ingest/browser` maps browser events into canonical ingest events and reuses dedupe/debounce.

@@ -4,14 +4,17 @@ from pathlib import Path
 import threading
 from typing import Any
 
+from uuid import uuid4
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .hash_utils import is_context_hash_valid
+from .hash_utils import compute_context_hash, is_context_hash_valid
 from .observer import ActiveWindowObserver
 from .schemas import (
+    BrowserIngestRequest,
     DebounceDecision,
     DedupeDecision,
     HealthReadiness,
@@ -313,6 +316,35 @@ async def on_shutdown() -> None:
 @app.post("/ingest", response_model=IngestResponse)
 def ingest(payload: IngestRequest) -> IngestResponse | JSONResponse:
     return process_ingest_event(payload.event)
+
+
+@app.post("/ingest/browser", response_model=IngestResponse)
+def ingest_browser(payload: BrowserIngestRequest) -> IngestResponse | JSONResponse:
+    browser_event = payload.event
+    snippet = (browser_event.snippet or "").strip()
+    context_text_parts = [
+        browser_event.app_name.strip(),
+        browser_event.page_title.strip(),
+        browser_event.url.strip(),
+    ]
+    if snippet:
+        context_text_parts.append(snippet)
+    context_text = " | ".join(part for part in context_text_parts if part)
+
+    mapped = ObservedContextEvent(
+        id=uuid4(),
+        timestamp_utc=browser_event.timestamp_utc,
+        app_name=browser_event.app_name.strip(),
+        window_title=browser_event.window_title.strip(),
+        file_path=browser_event.url.strip(),
+        context_text=context_text,
+        source="observer.accessibility_text",
+        capture_confidence=0.98,
+        context_hash="0" * 64,
+        source_version=browser_event.source_version,
+    )
+    mapped.context_hash = compute_context_hash(mapped)
+    return process_ingest_event(mapped)
 
 
 def _persist_stored_event(event: ObservedContextEvent) -> None:

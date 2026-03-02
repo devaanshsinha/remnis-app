@@ -8,7 +8,19 @@
 - Step 5 (Observer v1): completed with diagnostics and local JSONL persistence.
 - Step 6 (Storage + Search): started with keyword `/search` baseline.
 
-## 6. Add Semantic Search
+## 6. Expand Capture Sources (Capture-First)
+What to do:
+- Add browser adapter (Chromium first) to ingest URL, title, and optional snippet.
+- Add clipboard event capture with app/source metadata.
+- Add notification metadata capture where available.
+
+Why:
+- Retrieval robustness depends on source coverage and signal quality.
+
+What it produces:
+- Higher-quality events that support real-world recall queries.
+
+## 7. Add Semantic Search
 What to do:
 - Integrate embedding generation.
 - Introduce LanceDB for vector storage/query.
@@ -20,7 +32,18 @@ Why:
 What it produces:
 - True semantic retrieval aligned with Remnis core value.
 
-## 7. Connect HUD and Hotkey
+## 8. Add Two-Tier Query Pipeline
+What to do:
+- Keep fast path for immediate results from lightweight retrieval.
+- Add optional heavy path (query-time rerank/summarize) with strict timeout and cancel behavior.
+
+Why:
+- Delivers better answers without increasing background resource usage.
+
+What it produces:
+- Fast initial response plus optional enhanced answer quality.
+
+## 9. Connect HUD and Hotkey
 What to do:
 - Implement spotlight-style HUD query flow and keyboard interactions.
 - Register global hotkey in Tauri.
@@ -30,4 +53,3 @@ Why:
 
 What it produces:
 - Usable desktop experience with real retrieval loop.
-
