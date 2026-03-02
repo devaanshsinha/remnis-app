@@ -9,6 +9,7 @@
 - `GET /search` endpoint is available as a keyword fallback over local persisted events.
 - Background observer loop is implemented (`app/observer.py`) and starts on app startup.
 - Stored events are persisted to `sidecar/data/events.jsonl`.
+- Browser extension events are preferred over coarse observer browser-title events to reduce duplicates.
 - CORS allows local dev frontend origins on port `5173`.
 
 ## Key Files
@@ -32,3 +33,4 @@
 - `/observer/stats` includes `observer_state` and `last_error_code` for degraded-state diagnostics.
 - `/search` currently uses keyword scoring and will be replaced by semantic ranking in the embedding/LanceDB phase.
 - `/ingest/browser` maps browser events into canonical ingest events and reuses dedupe/debounce.
+

@@ -25,7 +25,7 @@ function shouldSend(tab) {
   const previous = lastSentByTab.get(tab.id);
 
   if (!previous) {
-    lastSentByTab.set(tab.id, { signature, at: now });
+    lastSentByTab.set(tab.id, { signature, at: now, url: tab.url || "" });
     return true;
   }
 
@@ -33,7 +33,7 @@ function shouldSend(tab) {
     return false;
   }
 
-  lastSentByTab.set(tab.id, { signature, at: now });
+  lastSentByTab.set(tab.id, { signature, at: now, url: tab.url || "" });
   return true;
 }
 
@@ -42,6 +42,7 @@ async function postTabEvent(tab) {
     return;
   }
 
+  const previous = lastSentByTab.get(tab.id);
   if (!shouldSend(tab)) {
     return;
   }
@@ -55,6 +56,9 @@ async function postTabEvent(tab) {
       url: tab.url,
       page_title: pageTitle,
       snippet: null,
+      prev_url: previous?.url || null,
+      tab_id: tab.id ?? null,
+      window_id: tab.windowId ?? null,
       source_version: "event.v1"
     }
   };

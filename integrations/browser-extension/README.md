@@ -11,9 +11,15 @@ What it sends:
 - active tab URL
 - tab title
 - timestamp
+- previous URL (when available)
+- tab id and window id
 
 Target endpoint:
 - `POST http://127.0.0.1:8765/ingest/browser`
+
+Notes:
+- Adapter sends lightweight navigation-flow context.
+- Sidecar prefers these richer browser events over coarse observer browser-title events.
 
 ## Local Dev Install (Chrome/Brave/Edge)
 
@@ -33,4 +39,3 @@ Target endpoint:
 
 3. Manual unpacked install
 - Useful for alpha/beta testers only.
-

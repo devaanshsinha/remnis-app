@@ -48,6 +48,9 @@ class BrowserCaptureEvent(BaseModel):
     url: str = Field(min_length=1)
     page_title: str = Field(min_length=1)
     snippet: str | None = None
+    prev_url: str | None = None
+    tab_id: int | None = None
+    window_id: int | None = None
     source_version: str = Field(pattern=r"^event\.v1$")
 
     @field_validator("timestamp_utc")
