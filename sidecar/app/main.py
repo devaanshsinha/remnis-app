@@ -19,6 +19,7 @@ from .schemas import (
     DebounceDecision,
     DedupeDecision,
     EventSource,
+    EventsResponse,
     HealthReadiness,
     HealthResponse,
     IngestRequest,
@@ -226,6 +227,106 @@ def _load_persisted_events() -> list[dict[str, Any]]:
     return rows
 
 
+def _parse_event_timestamp(raw_value: Any) -> datetime | None:
+    if not isinstance(raw_value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw_value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+@app.get("/events", response_model=EventsResponse)
+def events(
+    limit: int = 50,
+    offset: int = 0,
+    source: EventSource | None = None,
+    app_name: str | None = None,
+    from_ts: str | None = None,
+    to_ts: str | None = None,
+) -> EventsResponse | JSONResponse:
+    if limit < 1 or limit > 200:
+        return JSONResponse(
+            status_code=400,
+            content=_error_payload(
+                code="INVALID_REQUEST",
+                message="limit must be between 1 and 200",
+                details={"field": "limit"},
+            ),
+        )
+    if offset < 0:
+        return JSONResponse(
+            status_code=400,
+            content=_error_payload(
+                code="INVALID_REQUEST",
+                message="offset must be >= 0",
+                details={"field": "offset"},
+            ),
+        )
+
+    from_dt = _parse_event_timestamp(from_ts) if from_ts else None
+    if from_ts and from_dt is None:
+        return JSONResponse(
+            status_code=400,
+            content=_error_payload(
+                code="INVALID_REQUEST",
+                message="from_ts must be ISO-8601 UTC time",
+                details={"field": "from_ts"},
+            ),
+        )
+    to_dt = _parse_event_timestamp(to_ts) if to_ts else None
+    if to_ts and to_dt is None:
+        return JSONResponse(
+            status_code=400,
+            content=_error_payload(
+                code="INVALID_REQUEST",
+                message="to_ts must be ISO-8601 UTC time",
+                details={"field": "to_ts"},
+            ),
+        )
+    if from_dt and to_dt and from_dt > to_dt:
+        return JSONResponse(
+            status_code=400,
+            content=_error_payload(
+                code="INVALID_REQUEST",
+                message="from_ts must be <= to_ts",
+                details={"field": "from_ts"},
+            ),
+        )
+
+    app_name_normalized = app_name.strip().lower() if app_name else None
+    persisted = _load_persisted_events()
+    filtered: list[ObservedContextEvent] = []
+    for row in persisted:
+        try:
+            event = ObservedContextEvent.model_validate(row)
+        except Exception:
+            continue
+
+        if source and event.source != source:
+            continue
+        if app_name_normalized and event.app_name.strip().lower() != app_name_normalized:
+            continue
+        if from_dt and event.timestamp_utc < from_dt:
+            continue
+        if to_dt and event.timestamp_utc > to_dt:
+            continue
+        filtered.append(event)
+
+    filtered.sort(key=lambda item: item.timestamp_utc, reverse=True)
+    total_estimate = len(filtered)
+    page = filtered[offset : offset + limit]
+    return EventsResponse(
+        limit=limit,
+        offset=offset,
+        total_estimate=total_estimate,
+        results=page,
+    )
+
+
 @app.get("/search", response_model=SearchResponse)
 def search(q: str, k: int = 10, offset: int = 0) -> SearchResponse | JSONResponse:
     query = q.strip()
@@ -421,7 +522,7 @@ def ingest_browser(payload: BrowserIngestRequest) -> IngestResponse | JSONRespon
         window_title=browser_event.window_title.strip(),
         file_path=normalized_url,
         context_text=context_text,
-        source="observer.accessibility_text",
+        source=EventSource.ACCESSIBILITY_TEXT,
         capture_confidence=0.98,
         context_hash="0" * 64,
         source_version=browser_event.source_version,

@@ -134,6 +134,14 @@ class SearchResponse(BaseModel):
     results: list[SearchResult]
 
 
+class EventsResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    limit: int
+    offset: int
+    total_estimate: int
+    results: list[ObservedContextEvent]
+
+
 def normalize_for_hash(event: ObservedContextEvent) -> dict[str, Any]:
     return {
         "app_name": " ".join(event.app_name.strip().lower().split()),

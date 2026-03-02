@@ -6,19 +6,19 @@
 - Step 3 (Permission and Failure Behavior): completed.
 - Step 4 (Scaffold + `/health`): completed.
 - Step 5 (Observer v1): completed with diagnostics and local JSONL persistence.
-- Step 6 (Storage + Search): started with keyword `/search` baseline.
+- Step 6 (Storage + Search): in progress with browser ingest + `/events` retrieval + keyword `/search` baseline.
 
-## 6. Expand Capture Sources (Capture-First)
+## 6. Improve MVP Retrieval and Data Quality
 What to do:
-- Add browser adapter (Chromium first) to ingest URL, title, and optional snippet.
-- Add clipboard event capture with app/source metadata.
-- Add notification metadata capture where available.
+- Add deterministic filters to `/search` (time range, app/source filters) before semantic retrieval.
+- Add browser ingest dedupe improvements for repeated rapid tab emissions.
+- Wire desktop UI to `/events` and `/search` instead of health-only rendering.
 
 Why:
-- Retrieval robustness depends on source coverage and signal quality.
+- This completes the first end-to-end user loop before heavier model/vector work.
 
 What it produces:
-- Higher-quality events that support real-world recall queries.
+- Usable MVP query flow with better quality and lower noise.
 
 ## 7. Add Semantic Search
 What to do:

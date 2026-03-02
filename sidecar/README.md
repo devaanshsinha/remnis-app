@@ -6,6 +6,7 @@
 - `POST /ingest` endpoint is implemented with dedupe/debounce decisions.
 - `POST /ingest/browser` endpoint is available for browser adapter payloads.
 - `GET /observer/stats` endpoint is available for observer diagnostics.
+- `GET /events` endpoint is available with filterable retrieval over persisted events.
 - `GET /search` endpoint is available as a keyword fallback over local persisted events.
 - Background observer loop is implemented (`app/observer.py`) and starts on app startup.
 - Stored events are persisted to `sidecar/data/events.jsonl`.
@@ -15,7 +16,7 @@
 - CORS allows local dev frontend origins on port `5173`.
 
 ## Key Files
-- `app/main.py` - FastAPI app with health/ingest/stats/search endpoints and observer lifecycle
+- `app/main.py` - FastAPI app with health/ingest/stats/events/search endpoints and observer lifecycle
 - `app/observer.py` - active-window polling loop and event emission
 - `app/schemas.py` - canonical contracts and response models
 - `app/hash_utils.py` - SHA-256 context hash compute/verify helpers
@@ -33,5 +34,6 @@
 - `observer_ready` should become `true` when observer capture loop is functioning.
 - `db_ready` and `embedder_ready` remain `false` until those modules are implemented.
 - `/observer/stats` includes `observer_state` and `last_error_code` for degraded-state diagnostics.
+- `/events` provides filterable recent-history retrieval for UI and debugging.
 - `/search` currently uses keyword scoring and will be replaced by semantic ranking in the embedding/LanceDB phase.
 - `/ingest/browser` maps browser events into canonical ingest events and reuses dedupe/debounce.
