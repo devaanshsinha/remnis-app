@@ -3,12 +3,13 @@
 ## Current Status
 - Vite + React + TypeScript app is running.
 - Tauri v2 scaffold is present and runnable.
-- Health-check UI calls sidecar `GET /health`.
+- Desktop UI calls sidecar `GET /health` and `GET /events`.
+- UI shows a recent-events list from sidecar persistence.
 - Tailwind + shadcn-style foundation is configured.
 
 ## Key Files
 - `src/main.tsx` - frontend entry point
-- `src/App.tsx` - current health-check screen
+- `src/App.tsx` - health + recent-events MVP screen
 - `src/styles.css` - Tailwind directives + token values
 - `src/components/ui/button.tsx` - reusable Button primitive
 - `src/lib/utils.ts` - `cn` utility
@@ -24,4 +25,3 @@ Frontend-only:
 1. `cd apps/desktop`
 2. `npm install`
 3. `npm run dev`
-
