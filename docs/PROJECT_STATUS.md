@@ -2,7 +2,7 @@
 
 ## Snapshot
 - Date: 2026-03-10
-- Repo state: runnable local observer + ingest + persistence + keyword search baseline, still pre-model
+- Repo state: runnable local observer + ingest + persistence + keyword search baseline, with embedder/vector-store startup scaffolding added
 
 ## Completed So Far
 - Established repository structure (`apps/desktop`, `sidecar`, `docs`).
@@ -14,8 +14,9 @@
   - `GET /observer/stats` degraded-state diagnostics
   - JSONL persistence (`sidecar/data/events.jsonl`)
   - `GET /events` filterable retrieval over persisted events
-  - `GET /search` keyword fallback over persisted events
+  - `GET /search` with vector-first retrieval and keyword fallback
   - browser repeat-window suppression for rapid duplicate extension emissions
+  - startup-time embedder and LanceDB vector-store initialization scaffolding
 - Implemented desktop runtime baseline and UI foundation.
 
 ## Current Intent

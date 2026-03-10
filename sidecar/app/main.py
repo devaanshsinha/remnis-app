@@ -12,6 +12,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from .embedder import LocalEmbedder
 from .hash_utils import compute_context_hash, is_context_hash_valid
 from .observer import ActiveWindowObserver
 from .schemas import (
@@ -29,6 +30,7 @@ from .schemas import (
     SearchResult,
     ObservedContextEvent,
 )
+from .vector_store import LocalVectorStore
 
 app = FastAPI(title="Remnis Sidecar", version="0.1.0")
 
@@ -45,13 +47,15 @@ app.add_middleware(
 
 
 DEBOUNCE_WINDOW_SECONDS = 15.0
-BROWSER_REPEAT_WINDOW_SECONDS = 10.0
+BROWSER_REPEAT_WINDOW_SECONDS = 3.0
 _last_stored_hash: str | None = None
 _last_stored_timestamp_utc: datetime | None = None
 _last_browser_store_by_key: dict[str, tuple[str, datetime]] = {}
 _stored_count = 0
 _skipped_count = 0
 _observer: ActiveWindowObserver | None = None
+_embedder: LocalEmbedder | None = None
+_vector_store: LocalVectorStore | None = None
 _state_lock = threading.Lock()
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
@@ -85,6 +89,8 @@ async def validation_exception_handler(
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     observer_ready = _observer.is_ready() if _observer else False
+    db_ready = _vector_store.is_ready() if _vector_store else False
+    embedder_ready = _embedder.is_ready() if _embedder else False
     return HealthResponse(
         status="ok",
         service="remnis-sidecar",
@@ -92,8 +98,8 @@ def health() -> HealthResponse:
         time_utc=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         readiness=HealthReadiness(
             observer_ready=observer_ready,
-            db_ready=False,
-            embedder_ready=False,
+            db_ready=db_ready,
+            embedder_ready=embedder_ready,
         ),
     )
 
@@ -276,6 +282,16 @@ def _search_score(event: dict[str, Any], query_tokens: list[str]) -> float:
 
     matched = sum(1 for token in query_tokens if token in haystack)
     return matched / len(query_tokens)
+
+
+def _semantic_score(raw_distance: Any) -> float:
+    try:
+        distance = float(raw_distance)
+    except (TypeError, ValueError):
+        return 0.0
+    if distance < 0:
+        distance = 0.0
+    return 1.0 / (1.0 + distance)
 
 
 def _load_persisted_events() -> list[dict[str, Any]]:
@@ -464,31 +480,70 @@ def search(
             ),
         )
 
-    query_tokens = _tokenize_query(query)
     app_name_normalized = app_name.strip().lower() if app_name else None
-    persisted = _load_persisted_events()
-
     scored: list[tuple[float, str, dict[str, Any]]] = []
-    for raw_event in persisted:
+
+    if _embedder and _vector_store and _embedder.is_ready() and _vector_store.is_ready():
         try:
-            event = ObservedContextEvent.model_validate(raw_event)
+            query_embedding = _embedder.encode_text(query)
+            candidate_limit = min(max(k + offset, 25), 200)
+            for row in _vector_store.search_similar(query_embedding, candidate_limit):
+                try:
+                    event = ObservedContextEvent(
+                        id=row["id"],
+                        timestamp_utc=row["timestamp_utc"],
+                        app_name=row["app_name"],
+                        window_title=row["window_title"],
+                        file_path=None,
+                        context_text=row["context_text"],
+                        source=row["source"],
+                        capture_confidence=None,
+                        context_hash=row["context_hash"],
+                        source_version=row["source_version"],
+                    )
+                except Exception:
+                    continue
+
+                if source and event.source != source:
+                    continue
+                if app_name_normalized and event.app_name.strip().lower() != app_name_normalized:
+                    continue
+                if from_dt and event.timestamp_utc < from_dt:
+                    continue
+                if to_dt and event.timestamp_utc > to_dt:
+                    continue
+
+                event_dump = event.model_dump(mode="json")
+                score = _semantic_score(row.get("_distance"))
+                if score <= 0:
+                    continue
+                scored.append((score, str(event.timestamp_utc), event_dump))
         except Exception:
-            continue
+            scored = []
 
-        if source and event.source != source:
-            continue
-        if app_name_normalized and event.app_name.strip().lower() != app_name_normalized:
-            continue
-        if from_dt and event.timestamp_utc < from_dt:
-            continue
-        if to_dt and event.timestamp_utc > to_dt:
-            continue
+    if not scored:
+        query_tokens = _tokenize_query(query)
+        persisted = _load_persisted_events()
+        for raw_event in persisted:
+            try:
+                event = ObservedContextEvent.model_validate(raw_event)
+            except Exception:
+                continue
 
-        event_dump = event.model_dump(mode="json")
-        score = _search_score(event_dump, query_tokens)
-        if score <= 0:
-            continue
-        scored.append((score, str(event.timestamp_utc), event_dump))
+            if source and event.source != source:
+                continue
+            if app_name_normalized and event.app_name.strip().lower() != app_name_normalized:
+                continue
+            if from_dt and event.timestamp_utc < from_dt:
+                continue
+            if to_dt and event.timestamp_utc > to_dt:
+                continue
+
+            event_dump = event.model_dump(mode="json")
+            score = _search_score(event_dump, query_tokens)
+            if score <= 0:
+                continue
+            scored.append((score, str(event.timestamp_utc), event_dump))
 
     scored.sort(key=lambda row: (row[0], row[1]), reverse=True)
 
@@ -600,7 +655,13 @@ def _on_observer_event(event: ObservedContextEvent) -> None:
 @app.on_event("startup")
 async def on_startup() -> None:
     global _observer
+    global _embedder
+    global _vector_store
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _embedder = LocalEmbedder()
+    _embedder.initialize()
+    _vector_store = LocalVectorStore(DATA_DIR)
+    _vector_store.initialize()
     _observer = ActiveWindowObserver(on_event=_on_observer_event)
     _observer.start()
 
@@ -693,3 +754,19 @@ def _persist_stored_event(event: ObservedContextEvent) -> None:
     with EVENTS_JSONL.open("a", encoding="utf-8") as handle:
         handle.write(event.model_dump_json())
         handle.write("\n")
+
+    _index_stored_event(event)
+
+
+def _index_stored_event(event: ObservedContextEvent) -> None:
+    if not _embedder or not _vector_store:
+        return
+    if not _embedder.is_ready() or not _vector_store.is_ready():
+        return
+
+    try:
+        embedding = _embedder.encode_text(event.context_text)
+        _vector_store.index_event(event, embedding)
+    except Exception:
+        # Indexing failures should degrade search quality, not break ingest.
+        return

@@ -23,9 +23,9 @@ What it produces:
 
 ## 7. Add Semantic Search
 What to do:
-- Integrate the local background embedding model (`all-MiniLM-L6-v2`).
-- Introduce LanceDB for vector storage/query.
-- Replace keyword ranking in `/search` with semantic ranking.
+- Integrate the local background embedding model (`all-MiniLM-L6-v2`): startup scaffolding and conditional retrieval wiring added, dependency install still pending.
+- Introduce LanceDB for vector storage/query: startup scaffolding and conditional retrieval wiring added, dependency install still pending.
+- Replace keyword ranking in `/search` with semantic ranking: partially wired, blocked on local dependency installation.
 
 Why:
 - Keyword fallback is useful but limited for intent-level recall.

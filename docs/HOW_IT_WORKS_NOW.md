@@ -29,14 +29,16 @@ This describes the code that exists today, not future architecture.
 - Stored events are appended to `sidecar/data/events.jsonl`.
 - Skipped events are not persisted.
 - Browser ingest applies a short repeat window keyed by browser tab context so rapid duplicate extension emissions are skipped.
+- Sidecar now attempts to initialize the local embedder and LanceDB-backed vector store on startup.
+- If model/vector dependencies are missing, ingest still works and readiness remains degraded.
 
 ### Current search behavior
-- `/search` tokenizes the query and applies lightweight keyword scoring over:
+- `/search` first attempts semantic vector retrieval when both the embedder and LanceDB store are ready.
+- If those dependencies are unavailable, it falls back to lightweight keyword scoring over:
   - `app_name`
   - `window_title`
   - `context_text`
 - Results are returned in contract-shaped form with score and pagination.
-- This is a temporary retrieval implementation before semantic embeddings.
 
 ## 3. Tauri Layer (`apps/desktop/src-tauri`)
 - Minimal Tauri v2 scaffold exists:
@@ -44,10 +46,7 @@ This describes the code that exists today, not future architecture.
 - A valid RGBA icon exists at `src-tauri/icons/icon.png`.
 
 ## 4. What Is Not Implemented Yet
-- LanceDB integration.
-- Local embedding/indexing model integration.
 - Local query-time reasoning model integration.
-- Semantic ranking in `/search`.
 - HUD command palette and global hotkey flow.
 
 ## 5. Quick Run Sequence
