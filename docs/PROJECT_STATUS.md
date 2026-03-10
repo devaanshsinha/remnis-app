@@ -15,6 +15,7 @@
   - JSONL persistence (`sidecar/data/events.jsonl`)
   - `GET /events` filterable retrieval over persisted events
   - `GET /search` keyword fallback over persisted events
+  - browser repeat-window suppression for rapid duplicate extension emissions
 - Implemented desktop runtime baseline and UI foundation.
 
 ## Current Intent

@@ -13,6 +13,7 @@
 - Observer-based browser window events are skipped entirely.
 - Browser capture is handled by the extension ingest path (`/ingest/browser`).
 - Browser URLs are normalized on ingest (tracking params removed) for cleaner dedupe/search behavior.
+- Browser ingest applies a short server-side repeat window to suppress rapid duplicate tab emissions.
 - CORS allows local dev frontend origins on port `5173`.
 - Final sidecar architecture is intended to serve two local model roles:
   - background embedding/indexing

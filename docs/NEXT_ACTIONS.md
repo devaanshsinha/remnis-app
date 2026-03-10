@@ -12,7 +12,7 @@
 ## 6. Improve MVP Retrieval and Data Quality
 What to do:
 - Deterministic filters to `/search` (time range, app/source filters): completed.
-- Add browser ingest dedupe improvements for repeated rapid tab emissions.
+- Add browser ingest dedupe improvements for repeated rapid tab emissions: completed.
 - Wire desktop UI to `/events` and `/search` instead of health-only rendering: completed.
 
 Why:

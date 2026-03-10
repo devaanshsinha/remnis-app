@@ -28,6 +28,7 @@ This describes the code that exists today, not future architecture.
 ### Current storage behavior
 - Stored events are appended to `sidecar/data/events.jsonl`.
 - Skipped events are not persisted.
+- Browser ingest applies a short repeat window keyed by browser tab context so rapid duplicate extension emissions are skipped.
 
 ### Current search behavior
 - `/search` tokenizes the query and applies lightweight keyword scoring over:

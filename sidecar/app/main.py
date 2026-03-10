@@ -45,8 +45,10 @@ app.add_middleware(
 
 
 DEBOUNCE_WINDOW_SECONDS = 15.0
+BROWSER_REPEAT_WINDOW_SECONDS = 10.0
 _last_stored_hash: str | None = None
 _last_stored_timestamp_utc: datetime | None = None
+_last_browser_store_by_key: dict[str, tuple[str, datetime]] = {}
 _stored_count = 0
 _skipped_count = 0
 _observer: ActiveWindowObserver | None = None
@@ -135,6 +137,10 @@ def _tokenize_query(query: str) -> list[str]:
     return list(dict.fromkeys(tokens))
 
 
+def _normalize_text_signature(raw_value: str | None) -> str:
+    return " ".join((raw_value or "").strip().lower().split())
+
+
 def _is_browser_app(app_name: str) -> bool:
     lowered = app_name.strip().lower()
     return any(
@@ -192,6 +198,68 @@ def _should_skip_observer_browser_event(event: ObservedContextEvent) -> bool:
     if event.source != EventSource.ACTIVE_WINDOW:
         return False
     return _is_browser_app(event.app_name)
+
+
+def _browser_store_key(app_name: str, window_id: int | None, tab_id: int | None) -> str | None:
+    if tab_id is None:
+        return None
+    return f"{_normalize_text_signature(app_name)}:{window_id or 0}:{tab_id}"
+
+
+def _browser_store_signature(
+    normalized_url: str,
+    page_title: str,
+    snippet: str | None,
+) -> str:
+    return "|".join(
+        [
+            normalized_url,
+            _normalize_text_signature(page_title),
+            _normalize_text_signature(snippet),
+        ]
+    )
+
+
+def _should_skip_browser_repeat(
+    app_name: str,
+    window_id: int | None,
+    tab_id: int | None,
+    normalized_url: str,
+    page_title: str,
+    snippet: str | None,
+    timestamp_utc: datetime,
+) -> bool:
+    key = _browser_store_key(app_name, window_id, tab_id)
+    if key is None:
+        return False
+
+    with _state_lock:
+        previous = _last_browser_store_by_key.get(key)
+    if previous is None:
+        return False
+
+    signature = _browser_store_signature(normalized_url, page_title, snippet)
+    previous_signature, previous_timestamp_utc = previous
+    elapsed_seconds = (timestamp_utc - previous_timestamp_utc).total_seconds()
+    return signature == previous_signature and elapsed_seconds < BROWSER_REPEAT_WINDOW_SECONDS
+
+
+def _remember_browser_store(
+    app_name: str,
+    window_id: int | None,
+    tab_id: int | None,
+    normalized_url: str,
+    page_title: str,
+    snippet: str | None,
+    timestamp_utc: datetime,
+) -> None:
+    key = _browser_store_key(app_name, window_id, tab_id)
+    if key is None:
+        return
+
+    signature = _browser_store_signature(normalized_url, page_title, snippet)
+    with _state_lock:
+        _last_browser_store_by_key[key] = (signature, timestamp_utc)
 
 
 def _search_score(event: dict[str, Any], query_tokens: list[str]) -> float:
@@ -551,12 +619,37 @@ def ingest(payload: IngestRequest) -> IngestResponse | JSONResponse:
 @app.post("/ingest/browser", response_model=IngestResponse)
 def ingest_browser(payload: BrowserIngestRequest) -> IngestResponse | JSONResponse:
     browser_event = payload.event
+    event_id = uuid4()
     snippet = (browser_event.snippet or "").strip()
     normalized_url = _normalize_url(browser_event.url)
     normalized_prev_url = _normalize_url(browser_event.prev_url) if browser_event.prev_url else None
+    normalized_page_title = " ".join(browser_event.page_title.strip().split())
+
+    if _should_skip_browser_repeat(
+        app_name=browser_event.app_name,
+        window_id=browser_event.window_id,
+        tab_id=browser_event.tab_id,
+        normalized_url=normalized_url,
+        page_title=normalized_page_title,
+        snippet=snippet,
+        timestamp_utc=browser_event.timestamp_utc,
+    ):
+        global _skipped_count
+        with _state_lock:
+            _skipped_count += 1
+        return IngestResponse(
+            status="skipped",
+            event_id=event_id,
+            dedupe=DedupeDecision(is_duplicate=False, reason=None),
+            debounce=DebounceDecision(
+                is_debounced=True,
+                reason="browser_repeat_window",
+            ),
+        )
+
     context_text_parts = [
         browser_event.app_name.strip(),
-        browser_event.page_title.strip(),
+        normalized_page_title,
         normalized_url,
     ]
     if normalized_prev_url:
@@ -570,10 +663,10 @@ def ingest_browser(payload: BrowserIngestRequest) -> IngestResponse | JSONRespon
     context_text = " | ".join(part for part in context_text_parts if part)
 
     mapped = ObservedContextEvent(
-        id=uuid4(),
+        id=event_id,
         timestamp_utc=browser_event.timestamp_utc,
         app_name=browser_event.app_name.strip(),
-        window_title=browser_event.window_title.strip(),
+        window_title=normalized_page_title,
         file_path=normalized_url,
         context_text=context_text,
         source=EventSource.ACCESSIBILITY_TEXT,
@@ -582,7 +675,18 @@ def ingest_browser(payload: BrowserIngestRequest) -> IngestResponse | JSONRespon
         source_version=browser_event.source_version,
     )
     mapped.context_hash = compute_context_hash(mapped)
-    return process_ingest_event(mapped)
+    response = process_ingest_event(mapped)
+    if not isinstance(response, JSONResponse) and response.status == "stored":
+        _remember_browser_store(
+            app_name=browser_event.app_name,
+            window_id=browser_event.window_id,
+            tab_id=browser_event.tab_id,
+            normalized_url=normalized_url,
+            page_title=normalized_page_title,
+            snippet=snippet,
+            timestamp_utc=browser_event.timestamp_utc,
+        )
+    return response
 
 
 def _persist_stored_event(event: ObservedContextEvent) -> None:
