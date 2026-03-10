@@ -328,7 +328,15 @@ def events(
 
 
 @app.get("/search", response_model=SearchResponse)
-def search(q: str, k: int = 10, offset: int = 0) -> SearchResponse | JSONResponse:
+def search(
+    q: str,
+    k: int = 10,
+    offset: int = 0,
+    source: EventSource | None = None,
+    app_name: str | None = None,
+    from_ts: str | None = None,
+    to_ts: str | None = None,
+) -> SearchResponse | JSONResponse:
     query = q.strip()
     if not query:
         return JSONResponse(
@@ -358,15 +366,61 @@ def search(q: str, k: int = 10, offset: int = 0) -> SearchResponse | JSONRespons
             ),
         )
 
+    from_dt = _parse_event_timestamp(from_ts) if from_ts else None
+    if from_ts and from_dt is None:
+        return JSONResponse(
+            status_code=400,
+            content=_error_payload(
+                code="INVALID_REQUEST",
+                message="from_ts must be ISO-8601 UTC time",
+                details={"field": "from_ts"},
+            ),
+        )
+    to_dt = _parse_event_timestamp(to_ts) if to_ts else None
+    if to_ts and to_dt is None:
+        return JSONResponse(
+            status_code=400,
+            content=_error_payload(
+                code="INVALID_REQUEST",
+                message="to_ts must be ISO-8601 UTC time",
+                details={"field": "to_ts"},
+            ),
+        )
+    if from_dt and to_dt and from_dt > to_dt:
+        return JSONResponse(
+            status_code=400,
+            content=_error_payload(
+                code="INVALID_REQUEST",
+                message="from_ts must be <= to_ts",
+                details={"field": "from_ts"},
+            ),
+        )
+
     query_tokens = _tokenize_query(query)
-    events = _load_persisted_events()
+    app_name_normalized = app_name.strip().lower() if app_name else None
+    persisted = _load_persisted_events()
 
     scored: list[tuple[float, str, dict[str, Any]]] = []
-    for event in events:
-        score = _search_score(event, query_tokens)
+    for raw_event in persisted:
+        try:
+            event = ObservedContextEvent.model_validate(raw_event)
+        except Exception:
+            continue
+
+        if source and event.source != source:
+            continue
+        if app_name_normalized and event.app_name.strip().lower() != app_name_normalized:
+            continue
+        if from_dt and event.timestamp_utc < from_dt:
+            continue
+        if to_dt and event.timestamp_utc > to_dt:
+            continue
+
+        event_dump = event.model_dump(mode="json")
+        score = _search_score(event_dump, query_tokens)
         if score <= 0:
             continue
-        scored.append((score, str(event.get("timestamp_utc", "")), event))
+        scored.append((score, str(event.timestamp_utc), event_dump))
 
     scored.sort(key=lambda row: (row[0], row[1]), reverse=True)
 

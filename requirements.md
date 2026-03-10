@@ -22,6 +22,9 @@ Remnis is a local-first macOS developer productivity app that captures workflow 
 - Local-first: all capture, indexing, and querying happen on-device.
 - Low-friction UX: mostly invisible until hotkey summon.
 - Resource-aware: bounded CPU/memory impact while observing.
+- Final product requires two local model tiers:
+  - a lightweight always-on embedding/indexing model
+  - a heavier local query-time reasoning model
 
 ## 4. System Architecture Requirements
 ### 4.1 Desktop Shell (Tauri v2, Rust)
@@ -43,9 +46,16 @@ Remnis is a local-first macOS developer productivity app that captures workflow 
 - Must persist vectors and metadata on local disk.
 - Must support semantic top-k retrieval with low latency.
 
-### 4.5 Embeddings
+### 4.5 Background Embedding Model
 - Baseline model: `all-MiniLM-L6-v2` (local execution).
 - Embedding generation must be deterministic for same input text/version.
+- This model is responsible for background indexing and semantic retrieval features.
+
+### 4.6 Query-Time Reasoning Model
+- A second local model must exist for on-demand reasoning when the user invokes Remnis.
+- This model is responsible for reranking, synthesizing short answers, generating reminders, and connecting related events after retrieval.
+- This model must not be required for background capture/indexing.
+- Exact model choice is still open, but it must run locally and remain within acceptable interactive latency on target Macs.
 
 ## 5. Functional Requirements
 ### 5.1 Observation
@@ -69,6 +79,7 @@ Remnis is a local-first macOS developer productivity app that captures workflow 
 - Provide semantic query endpoint over localhost.
 - Return ranked results with score + metadata.
 - Support limit/offset style pagination.
+- Support a second query-time reasoning pass over retrieved results.
 
 ### 5.6 HUD Retrieval
 - Query as user types with request throttling.
@@ -83,6 +94,8 @@ Remnis is a local-first macOS developer productivity app that captures workflow 
 ### 6.2 Performance
 - Observer loop must remain lightweight during normal developer workflow.
 - Search response target: interactive latency suitable for type-ahead UX.
+- Background model work must stay low overhead.
+- Query-time model work may use more CPU/RAM than background indexing, but must remain bounded and user-invoked.
 
 ### 6.3 Reliability
 - Sidecar auto-restart policy on crash with bounded retries.
@@ -100,6 +113,7 @@ Remnis is a local-first macOS developer productivity app that captures workflow 
 ## 8. API Contract (Initial Draft)
 ### `GET /health`
 - Returns service status and model/db readiness flags.
+- Final architecture should expose readiness separately for the embedding model and the query-time reasoning model.
 
 ### `POST /ingest`
 - Accepts normalized context event payload.
@@ -132,5 +146,5 @@ Required fields per indexed item:
 - Exact IPC pattern between Tauri commands and sidecar HTTP.
 - Initial persistence strategy for raw events before embedding completion.
 - Fallback behavior when embedding model initialization fails.
+- Final local query-time reasoning model choice and resource envelope.
 - Final ranking blend (semantic score + recency weighting).
-

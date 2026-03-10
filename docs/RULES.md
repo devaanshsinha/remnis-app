@@ -6,6 +6,9 @@
 - Build smallest testable slice first before adding advanced capture/search features.
 - Prefer reversible technical choices in early phases.
 - Capture quality is the primary product bottleneck, not model size.
+- Final product is incomplete until both local model tiers exist:
+  - background embedding/indexing model
+  - on-demand query-time reasoning model
 - Use a two-tier inference strategy:
   - lightweight always-on processing for background capture/indexing
   - heavier on-demand processing only when user invokes search/HUD
@@ -36,6 +39,7 @@
 - Add smoke tests for health/startup paths before feature expansion.
 - Validate failure behavior (permissions denied, sidecar down, model unavailable).
 - For any new capture source, define a minimum signal quality bar and fallback behavior.
+- Track failure/readiness separately for the embedding model and the query-time reasoning model once both exist.
 
 ## 6. Execution Rules for Early Development
 - Order of work: contracts -> skeleton wiring -> minimal behavior -> validation -> iteration.

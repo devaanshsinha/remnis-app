@@ -12,6 +12,7 @@ This file defines expected behavior for known failure modes.
 - `healthy`: observer + db + embedder are ready.
 - `degraded_observer`: sidecar up, observer unavailable (often permissions).
 - `degraded_embedder`: sidecar up, embedding model unavailable.
+- `degraded_reasoner`: sidecar up, query-time reasoning model unavailable.
 - `degraded_db`: sidecar up, persistence unavailable.
 - `unavailable`: sidecar not reachable.
 
@@ -20,12 +21,14 @@ This file defines expected behavior for known failure modes.
 - `observer_ready`
 - `db_ready`
 - `embedder_ready`
+- `reasoner_ready` once the second local model is integrated
 
 Mode mapping:
 - all true -> `healthy`
 - observer false -> `degraded_observer`
 - db false -> `degraded_db`
 - embedder false -> `degraded_embedder`
+- reasoner false -> `degraded_reasoner`
 - request fails -> `unavailable`
 
 ## 4. Failure Modes
@@ -114,7 +117,24 @@ Expected desktop behavior:
 Recovery condition:
 - Embedder loads successfully and readiness flips to true.
 
-## 4.5 Database Unavailable
+## 4.5 Query-Time Reasoning Model Failure
+Trigger:
+- Query-time local model files unavailable/corrupt, out-of-memory, or runtime load failure.
+
+Expected sidecar behavior:
+- Keep API running.
+- Keep retrieval-only search working if embeddings and DB are healthy.
+- Mark the reasoning layer unavailable via readiness/degraded state once that contract is added.
+- Skip answer synthesis/reranking instead of failing the whole query.
+
+Expected desktop behavior:
+- Show a non-blocking degraded reasoning state.
+- Continue showing raw retrieval results and metadata.
+
+Recovery condition:
+- Query-time model loads successfully and reasoning path becomes available again.
+
+## 4.6 Database Unavailable
 Trigger:
 - LanceDB path inaccessible/corrupted/init failure.
 
@@ -129,7 +149,7 @@ Expected desktop behavior:
 Recovery condition:
 - DB path/permissions fixed and table initializes.
 
-## 4.6 Invalid Request Payload
+## 4.7 Invalid Request Payload
 Trigger:
 - Contract mismatch (missing required fields, invalid types, invalid `k`).
 
@@ -163,6 +183,7 @@ Log hygiene:
 - Permission denied: "Remnis needs Accessibility access to capture active window context."
 - Sidecar unavailable: "Remnis background service is unavailable. Retry to restore capture and search."
 - Embedder degraded: "Semantic search is temporarily unavailable while model dependencies recover."
+- Reasoner degraded: "Enhanced local answers are temporarily unavailable. Remnis will show retrieval-only results."
 - DB degraded: "Local storage is unavailable. New context may not be saved until recovery."
 
 ## 8. Ownership and Change Rule
@@ -170,4 +191,3 @@ Any change to retry policy, failure codes, or degraded mode behavior must update
 - `docs/FAILURE_BEHAVIOR.md`
 - `docs/CONTRACTS.md` (if API shape changes)
 - `docs/PROJECT_STATUS.md`
-

@@ -5,7 +5,12 @@
 - Tauri v2 scaffold is present and runnable.
 - Desktop UI calls sidecar `GET /health` and `GET /events`.
 - UI shows a recent-events list from sidecar persistence.
+- UI supports client-driven `/events` filters for source, app name, and UTC time range.
+- UI calls `GET /search` with the same filters for query-time retrieval.
 - Tailwind + shadcn-style foundation is configured.
+- Final desktop behavior is intended to surface both:
+  - fast local retrieval from the embedding/vector pipeline
+  - heavier local query-time reasoning output when available
 
 ## Key Files
 - `src/main.tsx` - frontend entry point

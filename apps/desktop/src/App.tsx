@@ -31,26 +31,150 @@ type EventsResponse = {
   results: EventItem[];
 };
 
+type SearchResult = {
+  id: string;
+  timestamp_utc: string;
+  app_name: string;
+  window_title: string;
+  context_text: string;
+  score: number;
+  context_hash: string;
+  source_version: string;
+};
+
+type SearchResponse = {
+  query: string;
+  k: number;
+  offset: number;
+  total_estimate: number;
+  results: SearchResult[];
+};
+
 const SIDECAR_BASE_URL = "http://127.0.0.1:8765";
 const SIDECAR_HEALTH_URL = `${SIDECAR_BASE_URL}/health`;
-const SIDECAR_EVENTS_URL = `${SIDECAR_BASE_URL}/events?limit=25`;
+const DEFAULT_LIMIT = 25;
+const DEFAULT_SEARCH_K = 20;
+
+const sourceOptions = [
+  { label: "All", value: "" },
+  { label: "Observer Window", value: "observer.active_window" },
+  { label: "Browser Adapter", value: "observer.accessibility_text" },
+] as const;
+
+function toUtcIso(localDateTime: string): string | null {
+  if (!localDateTime) {
+    return null;
+  }
+  const parsed = new Date(localDateTime);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+  return parsed.toISOString();
+}
 
 export default function App() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [eventTotal, setEventTotal] = useState(0);
+  const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchTotal, setSearchTotal] = useState(0);
+  const [appFilter, setAppFilter] = useState("");
+  const [sourceFilter, setSourceFilter] = useState<(typeof sourceOptions)[number]["value"]>("");
+  const [fromTs, setFromTs] = useState("");
+  const [toTs, setToTs] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchData = async () => {
+  const buildEventsUrl = (overrides?: {
+    appFilter?: string;
+    sourceFilter?: (typeof sourceOptions)[number]["value"];
+    fromTs?: string;
+    toTs?: string;
+  }) => {
+    const effectiveAppFilter = overrides?.appFilter ?? appFilter;
+    const effectiveSourceFilter = overrides?.sourceFilter ?? sourceFilter;
+    const effectiveFromTs = overrides?.fromTs ?? fromTs;
+    const effectiveToTs = overrides?.toTs ?? toTs;
+    const params = new URLSearchParams();
+    params.set("limit", String(DEFAULT_LIMIT));
+    if (effectiveSourceFilter) {
+      params.set("source", effectiveSourceFilter);
+    }
+    if (effectiveAppFilter.trim()) {
+      params.set("app_name", effectiveAppFilter.trim());
+    }
+    const fromUtc = toUtcIso(effectiveFromTs);
+    if (fromUtc) {
+      params.set("from_ts", fromUtc);
+    }
+    const toUtc = toUtcIso(effectiveToTs);
+    if (toUtc) {
+      params.set("to_ts", toUtc);
+    }
+    return `${SIDECAR_BASE_URL}/events?${params.toString()}`;
+  };
+
+  const buildSearchUrl = (
+    currentQuery: string,
+    overrides?: {
+      appFilter?: string;
+      sourceFilter?: (typeof sourceOptions)[number]["value"];
+      fromTs?: string;
+      toTs?: string;
+    }
+  ) => {
+    const trimmedQuery = currentQuery.trim();
+    if (!trimmedQuery) {
+      return null;
+    }
+    const effectiveAppFilter = overrides?.appFilter ?? appFilter;
+    const effectiveSourceFilter = overrides?.sourceFilter ?? sourceFilter;
+    const effectiveFromTs = overrides?.fromTs ?? fromTs;
+    const effectiveToTs = overrides?.toTs ?? toTs;
+    const params = new URLSearchParams();
+    params.set("q", trimmedQuery);
+    params.set("k", String(DEFAULT_SEARCH_K));
+    if (effectiveSourceFilter) {
+      params.set("source", effectiveSourceFilter);
+    }
+    if (effectiveAppFilter.trim()) {
+      params.set("app_name", effectiveAppFilter.trim());
+    }
+    const fromUtc = toUtcIso(effectiveFromTs);
+    if (fromUtc) {
+      params.set("from_ts", fromUtc);
+    }
+    const toUtc = toUtcIso(effectiveToTs);
+    if (toUtc) {
+      params.set("to_ts", toUtc);
+    }
+    return `${SIDECAR_BASE_URL}/search?${params.toString()}`;
+  };
+
+  const fetchData = async (overrides?: {
+    appFilter?: string;
+    sourceFilter?: (typeof sourceOptions)[number]["value"];
+    fromTs?: string;
+    toTs?: string;
+  }) => {
     setLoading(true);
     setError(null);
 
     try {
-      const [healthResponse, eventsResponse] = await Promise.all([
+      const eventsUrl = buildEventsUrl(overrides);
+      const searchUrl = buildSearchUrl(query, overrides);
+      const requests: Promise<Response>[] = [
         fetch(SIDECAR_HEALTH_URL, { method: "GET" }),
-        fetch(SIDECAR_EVENTS_URL, { method: "GET" }),
-      ]);
+        fetch(eventsUrl, { method: "GET" }),
+      ];
+      if (searchUrl) {
+        requests.push(fetch(searchUrl, { method: "GET" }));
+      }
+      const responses = await Promise.all(requests);
+      const healthResponse = responses[0];
+      const eventsResponse = responses[1];
+      const searchResponse = responses.length > 2 ? responses[2] : null;
 
       if (!healthResponse.ok) {
         throw new Error(`Health HTTP ${healthResponse.status}`);
@@ -58,16 +182,29 @@ export default function App() {
       if (!eventsResponse.ok) {
         throw new Error(`Events HTTP ${eventsResponse.status}`);
       }
+      if (searchResponse && !searchResponse.ok) {
+        throw new Error(`Search HTTP ${searchResponse.status}`);
+      }
 
       const healthBody = (await healthResponse.json()) as HealthResponse;
       const eventsBody = (await eventsResponse.json()) as EventsResponse;
       setHealth(healthBody);
       setEvents(eventsBody.results);
       setEventTotal(eventsBody.total_estimate);
+      if (searchResponse) {
+        const searchBody = (await searchResponse.json()) as SearchResponse;
+        setSearchResults(searchBody.results);
+        setSearchTotal(searchBody.total_estimate);
+      } else {
+        setSearchResults([]);
+        setSearchTotal(0);
+      }
     } catch (err) {
       setHealth(null);
       setEvents([]);
       setEventTotal(0);
+      setSearchResults([]);
+      setSearchTotal(0);
       const raw = err instanceof Error ? err.message : "Unknown error";
       setError(
         `${raw}. Make sure sidecar is running on ${SIDECAR_BASE_URL} and allows local dev CORS.`
@@ -119,6 +256,111 @@ export default function App() {
       </section>
 
       <section className="mt-6 space-y-3">
+        <form
+          className="flex gap-2 border-b pb-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void fetchData();
+          }}
+        >
+          <input
+            className="h-9 flex-1 rounded-md border px-2"
+            placeholder="Search your context"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <Button type="submit" size="sm" disabled={loading}>
+            Search
+          </Button>
+        </form>
+
+        <form
+          className="grid gap-2 border-b pb-3 text-sm sm:grid-cols-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void fetchData();
+          }}
+        >
+          <input
+            className="h-9 rounded-md border px-2"
+            placeholder="Filter app name (e.g. Google Chrome)"
+            value={appFilter}
+            onChange={(event) => setAppFilter(event.target.value)}
+          />
+          <select
+            className="h-9 rounded-md border px-2"
+            value={sourceFilter}
+            onChange={(event) =>
+              setSourceFilter(event.target.value as (typeof sourceOptions)[number]["value"])
+            }
+          >
+            {sourceOptions.map((option) => (
+              <option key={option.value || "all"} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <input
+            className="h-9 rounded-md border px-2"
+            type="datetime-local"
+            value={fromTs}
+            onChange={(event) => setFromTs(event.target.value)}
+          />
+          <input
+            className="h-9 rounded-md border px-2"
+            type="datetime-local"
+            value={toTs}
+            onChange={(event) => setToTs(event.target.value)}
+          />
+          <Button type="submit" size="sm" disabled={loading}>
+            Apply Filters
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={loading}
+            onClick={() => {
+              setAppFilter("");
+              setSourceFilter("");
+              setFromTs("");
+              setToTs("");
+              void fetchData({
+                appFilter: "",
+                sourceFilter: "",
+                fromTs: "",
+                toTs: "",
+              });
+            }}
+          >
+            Clear Filters
+          </Button>
+        </form>
+
+        {query.trim() && (
+          <section className="space-y-3 border-b pb-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm uppercase tracking-wide text-muted-foreground">
+                Search Results
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                showing {searchResults.length} of {searchTotal}
+              </p>
+            </div>
+            {searchResults.length === 0 && !error && <p className="text-sm">No matching events.</p>}
+            {searchResults.map((result) => (
+              <article key={result.id} className="space-y-1 border-b pb-3">
+                <p className="text-sm font-medium">{result.window_title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {result.app_name} · score {result.score.toFixed(2)}
+                </p>
+                <p className="text-xs">{result.context_text}</p>
+                <p className="text-xs text-muted-foreground">{result.timestamp_utc}</p>
+              </article>
+            ))}
+          </section>
+        )}
+
         <div className="flex items-center justify-between border-b pb-2">
           <h2 className="text-sm uppercase tracking-wide text-muted-foreground">Recent Events</h2>
           <p className="text-xs text-muted-foreground">

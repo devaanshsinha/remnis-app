@@ -12,6 +12,12 @@ There are three major parts:
 - Sidecar service (Python FastAPI): observer, ingest pipeline, embedding, and search endpoints.
 - Local vector storage (LanceDB): vector + metadata persistence for semantic retrieval.
 
+## Required Local Model Architecture
+- Remnis is intended to end with two local models.
+- Local model 1: lightweight embedding/indexing model used in the background for event and query embeddings.
+- Local model 2: heavier query-time reasoning model used only when the user invokes Remnis and wants better synthesis, reranking, reminders, or related-context explanations.
+- The product is not considered complete without both model tiers.
+
 ## Mental Model
 Think of Remnis as a pipeline:
 1. Observe context changes.
@@ -26,16 +32,17 @@ Think of Remnis as a pipeline:
 - Embeddings and heavier models improve retrieval quality, but they cannot compensate for poor capture.
 - Product strategy is now explicitly:
   - capture-first architecture
-  - lightweight background processing
-  - heavier query-time reasoning when the user explicitly invokes Remnis
+  - lightweight background processing with a local embedding/indexing model
+  - heavier query-time reasoning with a separate local model only when the user explicitly invokes Remnis
 
 ## Data Flow (Initial)
 1. Observer identifies active app/window.
 2. Event is normalized to canonical schema.
 3. Hash computed from normalized context.
-4. If debounce/dedupe passes, event is stored and embedded.
-5. Search endpoint returns ranked matches for query.
-6. HUD displays results with app identity, snippet, relative time.
+4. If debounce/dedupe passes, event is stored and later indexed with the local embedding model.
+5. Query is embedded and matched against stored vectors.
+6. Optional query-time reasoning model reranks or synthesizes the final answer.
+7. HUD displays results with app identity, snippet, relative time, and optional synthesized answer.
 
 ## Core Terms
 - Observer: module that reads current macOS context.
@@ -43,6 +50,7 @@ Think of Remnis as a pipeline:
 - Deduplication: hash-based skip logic for repeated context.
 - Embedding: numeric vector representing semantic meaning of text.
 - Vector search: nearest-neighbor retrieval by embedding similarity.
+- Reasoning model: heavier local model used after retrieval for answer synthesis or reranking.
 - Sidecar: local background service launched and supervised by desktop app.
 
 ## Constraints You Must Respect
@@ -66,6 +74,9 @@ Think of Remnis as a pipeline:
   - ingest dedupe/debounce
   - JSONL persistence
   - keyword search fallback endpoint
+- Neither local model tier is integrated yet in runtime:
+  - no local embedding/indexing pipeline
+  - no local query-time reasoning pipeline
 
 ## Planned Source Expansion
 - Browser adapter is the next high-value source (URL/title/snippet).

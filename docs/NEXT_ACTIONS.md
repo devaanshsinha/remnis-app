@@ -7,12 +7,13 @@
 - Step 4 (Scaffold + `/health`): completed.
 - Step 5 (Observer v1): completed with diagnostics and local JSONL persistence.
 - Step 6 (Storage + Search): in progress with browser ingest + `/events` retrieval + keyword `/search` baseline.
+- The two-local-model architecture is a required end-state, but neither model tier is integrated yet.
 
 ## 6. Improve MVP Retrieval and Data Quality
 What to do:
-- Add deterministic filters to `/search` (time range, app/source filters) before semantic retrieval.
+- Deterministic filters to `/search` (time range, app/source filters): completed.
 - Add browser ingest dedupe improvements for repeated rapid tab emissions.
-- Wire desktop UI to `/events` and `/search` instead of health-only rendering.
+- Wire desktop UI to `/events` and `/search` instead of health-only rendering: completed.
 
 Why:
 - This completes the first end-to-end user loop before heavier model/vector work.
@@ -22,7 +23,7 @@ What it produces:
 
 ## 7. Add Semantic Search
 What to do:
-- Integrate embedding generation.
+- Integrate the local background embedding model (`all-MiniLM-L6-v2`).
 - Introduce LanceDB for vector storage/query.
 - Replace keyword ranking in `/search` with semantic ranking.
 
@@ -35,13 +36,13 @@ What it produces:
 ## 8. Add Two-Tier Query Pipeline
 What to do:
 - Keep fast path for immediate results from lightweight retrieval.
-- Add optional heavy path (query-time rerank/summarize) with strict timeout and cancel behavior.
+- Add the heavier local query-time reasoning model for rerank/summarize with strict timeout and cancel behavior.
 
 Why:
 - Delivers better answers without increasing background resource usage.
 
 What it produces:
-- Fast initial response plus optional enhanced answer quality.
+- Fast initial response plus enhanced answer quality from a second local model.
 
 ## 9. Connect HUD and Hotkey
 What to do:
@@ -53,3 +54,8 @@ Why:
 
 What it produces:
 - Usable desktop experience with real retrieval loop.
+
+## End-State Reminder
+- Remnis is not considered complete until both local model tiers are implemented and documented:
+  - embedding/indexing model
+  - query-time reasoning model

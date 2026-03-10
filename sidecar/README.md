@@ -14,6 +14,9 @@
 - Browser capture is handled by the extension ingest path (`/ingest/browser`).
 - Browser URLs are normalized on ingest (tracking params removed) for cleaner dedupe/search behavior.
 - CORS allows local dev frontend origins on port `5173`.
+- Final sidecar architecture is intended to serve two local model roles:
+  - background embedding/indexing
+  - query-time local reasoning
 
 ## Key Files
 - `app/main.py` - FastAPI app with health/ingest/stats/events/search endpoints and observer lifecycle
@@ -35,5 +38,7 @@
 - `db_ready` and `embedder_ready` remain `false` until those modules are implemented.
 - `/observer/stats` includes `observer_state` and `last_error_code` for degraded-state diagnostics.
 - `/events` provides filterable recent-history retrieval for UI and debugging.
-- `/search` currently uses keyword scoring and will be replaced by semantic ranking in the embedding/LanceDB phase.
+- `/search` supports deterministic filters (`source`, `app_name`, `from_ts`, `to_ts`) and uses keyword scoring within that filtered set.
+- `/search` will later be replaced by semantic ranking in the embedding/LanceDB phase.
+- The finished product also requires a second local query-time reasoning layer on top of retrieval.
 - `/ingest/browser` maps browser events into canonical ingest events and reuses dedupe/debounce.

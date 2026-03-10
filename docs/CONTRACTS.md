@@ -75,6 +75,10 @@ Purpose: readiness and dependency visibility.
 }
 ```
 
+Current v0.1 note:
+- The current implementation exposes `observer_ready`, `db_ready`, and `embedder_ready`.
+- The final two-model architecture will require a later contract revision that also exposes readiness for the local query-time reasoning model.
+
 ## 3.2 `POST /ingest`
 Purpose: ingest one normalized event; dedupe/debounce decision done server-side.
 
@@ -157,6 +161,10 @@ Purpose: semantic retrieval.
   ]
 }
 ```
+
+Forward-looking note:
+- Current v0.1 search shape is retrieval-oriented.
+- A later contract revision may add optional fields for query-time local reasoning output after the second local model is integrated.
 
 ## 3.4 Error Shape (all endpoints)
 ```json

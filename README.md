@@ -21,6 +21,13 @@ Developer context is fragmented across editors, terminals, browsers, chat tools,
 - Exposes a local API for ingest and search workflows
 - Provides a desktop UI that talks to the local sidecar
 
+## End-State Model Architecture
+
+- Remnis is intended to ship with two local models, not one.
+- Model 1 is the always-on embedding/indexing model used for background semantic indexing. The baseline planned model is `all-MiniLM-L6-v2`.
+- Model 2 is a heavier local query-time reasoning model used only when the user invokes Remnis and wants a better answer, rerank, summary, reminder, or synthesized explanation.
+- The app is not considered complete without both model tiers running locally on device.
+
 ## What Is Implemented Right Now
 
 - Desktop app scaffold with Tauri + React + TypeScript
@@ -43,8 +50,9 @@ Developer context is fragmented across editors, terminals, browsers, chat tools,
 
 ## What Is Not Implemented Yet
 
-- Embedding generation and LanceDB integration
-- Semantic `/search` ranking
+- Local embedding generation and LanceDB integration
+- Local query-time reasoning model integration
+- Semantic `/search` ranking and query-time rerank/summarize flow
 - Full Spotlight-style HUD and global hotkey UX
 
 ## Repository Layout

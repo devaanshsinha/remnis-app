@@ -44,7 +44,8 @@ This describes the code that exists today, not future architecture.
 
 ## 4. What Is Not Implemented Yet
 - LanceDB integration.
-- Embedding model integration.
+- Local embedding/indexing model integration.
+- Local query-time reasoning model integration.
 - Semantic ranking in `/search`.
 - HUD command palette and global hotkey flow.
 
@@ -55,4 +56,3 @@ This describes the code that exists today, not future architecture.
 2. Start desktop:
    - `cd apps/desktop`
    - `npm run tauri dev` (or `npm run dev` for frontend-only)
-

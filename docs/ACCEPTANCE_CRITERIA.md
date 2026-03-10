@@ -21,18 +21,24 @@ This file defines objective pass/fail gates for implementation phases.
 ## Phase 3: Storage and Semantic Search
 1. LanceDB table initializes on first run and reopens on restart.
 2. Event metadata persists and is queryable after app restart.
-3. Embeddings are generated for stored events when embedder is ready.
+3. Embeddings are generated for stored events by the local embedding model when embedder is ready.
 4. `GET /search` returns ranked results with `score`.
 5. Query latency is acceptable for interactive typing on local machine.
 
-## Phase 4: HUD Retrieval UX
+## Phase 4: Query-Time Local Reasoning
+1. A second local model is available for query-time reasoning after retrieval.
+2. Query-time reasoning can rerank or synthesize over retrieved events without blocking background capture.
+3. If the query-time model is unavailable, Remnis falls back to retrieval-only mode without crashing.
+4. Query-time model latency stays within a bounded user-acceptable invoke window.
+
+## Phase 5: HUD Retrieval UX
 1. Global hotkey opens and closes HUD reliably.
 2. Query input triggers throttled search calls.
 3. Results list shows app name, snippet, and relative time.
 4. Keyboard navigation supports up/down/select/escape.
 5. Empty/error states are visible and non-blocking.
 
-## Phase 5: Packaging Baseline
+## Phase 6: Packaging Baseline
 1. Sidecar runs without requiring system Python installation.
 2. Packaged app launches on a clean macOS environment.
 3. Loopback-only sidecar API policy is preserved after packaging.
@@ -41,3 +47,4 @@ This file defines objective pass/fail gates for implementation phases.
 
 ## Exit Rule
 A phase is complete only when every criterion in that phase is demonstrably satisfied.
+- Remnis is not complete until both local model phases pass: Phase 3 and Phase 4.

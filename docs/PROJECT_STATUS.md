@@ -1,8 +1,8 @@
 # Project Status
 
 ## Snapshot
-- Date: 2026-03-02
-- Repo state: runnable local observer + ingest + persistence + keyword search baseline
+- Date: 2026-03-10
+- Repo state: runnable local observer + ingest + persistence + keyword search baseline, still pre-model
 
 ## Completed So Far
 - Established repository structure (`apps/desktop`, `sidecar`, `docs`).
@@ -26,10 +26,14 @@
 - Runtime architecture will use two tiers:
   - lightweight always-on background processing
   - heavier query-time processing only on user invoke
+- Finished product requires two separate local model roles:
+  - local embedding/indexing model
+  - local query-time reasoning model
 
 ## Open Items
 - Define clipboard + notification event schema extensions.
-- Replace keyword `/search` scoring with embedding + LanceDB retrieval.
+- Replace keyword `/search` scoring with local embedding + LanceDB retrieval.
+- Choose and integrate the local query-time reasoning model.
 - Add structured persistence/index schema for vector workflow.
 - Integrate search results into the final Spotlight-style HUD.
 
@@ -39,4 +43,4 @@
 - Packaging complexity for sidecar distribution.
 
 ## Next Gate
-- Semantic `/search` returning embedding-ranked results from LanceDB.
+- Semantic `/search` returning embedding-ranked results from LanceDB, followed by a separate local query-time reasoning pass.
