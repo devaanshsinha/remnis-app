@@ -19,6 +19,7 @@
   - background embedding/indexing
   - query-time local reasoning
 - Embedder and vector-store initialization now exist in code and drive real readiness flags when dependencies are installed.
+- On startup, the sidecar backfills previously stored JSONL events into the vector index when embedder and LanceDB dependencies are available.
 
 ## Key Files
 - `app/main.py` - FastAPI app with health/ingest/stats/events/search endpoints and observer lifecycle

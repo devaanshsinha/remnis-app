@@ -30,6 +30,7 @@ This describes the code that exists today, not future architecture.
 - Skipped events are not persisted.
 - Browser ingest applies a short repeat window keyed by browser tab context so rapid duplicate extension emissions are skipped.
 - Sidecar now attempts to initialize the local embedder and LanceDB-backed vector store on startup.
+- If the embedder and vector store are ready, sidecar backfills stored JSONL events into the vector index on startup.
 - If model/vector dependencies are missing, ingest still works and readiness remains degraded.
 
 ### Current search behavior

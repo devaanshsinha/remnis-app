@@ -311,6 +311,16 @@ def _load_persisted_events() -> list[dict[str, Any]]:
     return rows
 
 
+def _load_persisted_observed_events() -> list[ObservedContextEvent]:
+    events: list[ObservedContextEvent] = []
+    for row in _load_persisted_events():
+        try:
+            events.append(ObservedContextEvent.model_validate(row))
+        except Exception:
+            continue
+    return events
+
+
 def _parse_event_timestamp(raw_value: Any) -> datetime | None:
     if not isinstance(raw_value, str):
         return None
@@ -382,14 +392,8 @@ def events(
         )
 
     app_name_normalized = app_name.strip().lower() if app_name else None
-    persisted = _load_persisted_events()
     filtered: list[ObservedContextEvent] = []
-    for row in persisted:
-        try:
-            event = ObservedContextEvent.model_validate(row)
-        except Exception:
-            continue
-
+    for event in _load_persisted_observed_events():
         if source and event.source != source:
             continue
         if app_name_normalized and event.app_name.strip().lower() != app_name_normalized:
@@ -494,7 +498,7 @@ def search(
                         timestamp_utc=row["timestamp_utc"],
                         app_name=row["app_name"],
                         window_title=row["window_title"],
-                        file_path=None,
+                        file_path=row.get("file_path"),
                         context_text=row["context_text"],
                         source=row["source"],
                         capture_confidence=None,
@@ -523,13 +527,7 @@ def search(
 
     if not scored:
         query_tokens = _tokenize_query(query)
-        persisted = _load_persisted_events()
-        for raw_event in persisted:
-            try:
-                event = ObservedContextEvent.model_validate(raw_event)
-            except Exception:
-                continue
-
+        for event in _load_persisted_observed_events():
             if source and event.source != source:
                 continue
             if app_name_normalized and event.app_name.strip().lower() != app_name_normalized:
@@ -662,6 +660,7 @@ async def on_startup() -> None:
     _embedder.initialize()
     _vector_store = LocalVectorStore(DATA_DIR)
     _vector_store.initialize()
+    _backfill_vector_index()
     _observer = ActiveWindowObserver(on_event=_on_observer_event)
     _observer.start()
 
@@ -763,6 +762,8 @@ def _index_stored_event(event: ObservedContextEvent) -> None:
         return
     if not _embedder.is_ready() or not _vector_store.is_ready():
         return
+    if _vector_store.has_context_hash(event.context_hash):
+        return
 
     try:
         embedding = _embedder.encode_text(event.context_text)
@@ -770,3 +771,13 @@ def _index_stored_event(event: ObservedContextEvent) -> None:
     except Exception:
         # Indexing failures should degrade search quality, not break ingest.
         return
+
+
+def _backfill_vector_index() -> None:
+    if not _embedder or not _vector_store:
+        return
+    if not _embedder.is_ready() or not _vector_store.is_ready():
+        return
+
+    for event in _load_persisted_observed_events():
+        _index_stored_event(event)

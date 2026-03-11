@@ -17,6 +17,7 @@
   - `GET /search` with vector-first retrieval and keyword fallback
   - browser repeat-window suppression for rapid duplicate extension emissions
   - startup-time embedder and LanceDB vector-store initialization scaffolding
+  - startup backfill from JSONL into the vector index when dependencies are available
 - Implemented desktop runtime baseline and UI foundation.
 
 ## Current Intent
