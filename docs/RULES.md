@@ -6,6 +6,7 @@
 - Build smallest testable slice first before adding advanced capture/search features.
 - Prefer reversible technical choices in early phases.
 - Capture quality is the primary product bottleneck, not model size.
+- Treat raw local history and derived retrieval documents as separate layers. Do not overfit raw capture to current search heuristics.
 - Final product is incomplete until both local model tiers exist:
   - background embedding/indexing model
   - on-demand query-time reasoning model
@@ -31,7 +32,8 @@
 ## 4. Security and Privacy Rules
 - Sidecar API binds to loopback only.
 - No analytics/telemetry unless explicitly added with local-only defaults and user opt-in.
-- Store minimal useful context needed for retrieval quality.
+- Preserve high-signal local raw context needed for later developer lookups.
+- Improve retrieval cleanliness in the derived index/search layer before deleting accepted raw history.
 - Add explicit permission checks and user-facing permission states.
 
 ## 5. Quality Rules

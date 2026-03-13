@@ -16,7 +16,7 @@ This describes the code that exists today, not future architecture.
   - `POST /ingest` validates event schema/hash and returns `stored/skipped` decisions.
   - `GET /observer/stats` returns observer runtime diagnostics.
   - `GET /index/status` returns embedder/vector index readiness and indexed-count visibility.
-  - `GET /search` returns keyword-ranked matches from persisted events.
+  - `GET /search` returns semantic-first matches with keyword fallback.
 
 ### Current observer behavior (v1)
 - Polls active frontmost app/window title via macOS `osascript`.
@@ -27,11 +27,12 @@ This describes the code that exists today, not future architecture.
 - Feeds events through ingest dedupe/debounce logic.
 
 ### Current storage behavior
-- Stored events are appended to `sidecar/data/events.jsonl`.
+- Stored events are appended to `sidecar/data/events.jsonl` as the raw local event history.
 - Skipped events are not persisted.
 - Browser ingest applies a short repeat window keyed by browser tab context so rapid duplicate extension emissions are skipped.
 - Sidecar now attempts to initialize the local embedder and LanceDB-backed vector store on startup.
 - If the embedder and vector store are ready, sidecar backfills stored JSONL events into the vector index on startup.
+- The LanceDB vector index should be treated as a derived retrieval layer built from raw history, not the only source of truth for prior work context.
 - If an older empty vector table exists with the wrong embedding width, sidecar repairs it during the next successful index write so semantic indexing can recover without manual table cleanup.
 - If the vector table exists but the local manifest file is missing, sidecar rebuilds indexed-count bookkeeping from the table contents on startup.
 - If model/vector dependencies are missing, ingest still works and readiness remains degraded.

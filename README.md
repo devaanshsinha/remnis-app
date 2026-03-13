@@ -17,7 +17,8 @@ Developer context is fragmented across editors, terminals, browsers, chat tools,
 ## What The App Does
 
 - Watches your active window context on macOS
-- Normalizes and deduplicates context events
+- Stores local workflow context as a raw event history for later recall
+- Builds a derived retrieval/index layer for search quality
 - Exposes a local API for ingest and search workflows
 - Provides a desktop UI that talks to the local sidecar
 
@@ -35,24 +36,27 @@ Developer context is fragmented across editors, terminals, browsers, chat tools,
 - `GET /health` endpoint with readiness flags
 - `POST /ingest` endpoint with schema validation and hash checks
 - `GET /observer/stats` endpoint with observer diagnostics
-- `GET /search` endpoint with local keyword ranking
+- `GET /index/status` endpoint with embedder/vector-store visibility
+- `GET /search` endpoint with semantic-first retrieval and keyword fallback
 - Observer v1 active-window capture loop
-- Dedupe and debounce behavior in ingest pipeline
-- Local JSONL persistence for stored events
+- Browser extension ingest path with repeat suppression
+- Local JSONL persistence for raw stored events
+- Local embedder + LanceDB startup/backfill flow
 - Tailwind + shadcn-style UI foundation for future screens
 
 ## What Users Will Be Able To Do
 
 - Search for intent like "that docker build error from this morning"
 - Recover where and when a task was performed
+- Ask developer-oriented questions against prior local work context
 - Resume work with context snippets and timestamps
 - Keep all capture and indexing local to the machine
 
 ## What Is Not Implemented Yet
 
-- Local embedding generation and LanceDB integration
 - Local query-time reasoning model integration
-- Semantic `/search` ranking and query-time rerank/summarize flow
+- Richer source integrations such as clipboard, editor/workspace, and agent/chat context
+- A cleaner derived retrieval/document layer over the raw event timeline
 - Full Spotlight-style HUD and global hotkey UX
 
 ## Repository Layout

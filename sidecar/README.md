@@ -8,9 +8,9 @@
 - `GET /observer/stats` endpoint is available for observer diagnostics.
 - `GET /index/status` endpoint is available for embedder/vector index visibility.
 - `GET /events` endpoint is available with filterable retrieval over persisted events.
-- `GET /search` endpoint is available as a keyword fallback over local persisted events.
+- `GET /search` endpoint is available as semantic-first retrieval with keyword fallback.
 - Background observer loop is implemented (`app/observer.py`) and starts on app startup.
-- Stored events are persisted to `sidecar/data/events.jsonl`.
+- Stored events are persisted to `sidecar/data/events.jsonl` as an append-only raw event log.
 - Observer-based browser window events are skipped entirely.
 - Browser capture is handled by the extension ingest path (`/ingest/browser`).
 - Browser URLs are normalized on ingest (tracking params removed) for cleaner dedupe/search behavior.
@@ -21,6 +21,7 @@
   - query-time local reasoning
 - Embedder and vector-store initialization now exist in code and drive real readiness flags when dependencies are installed.
 - On startup, the sidecar backfills previously stored JSONL events into the vector index when embedder and LanceDB dependencies are available.
+- The vector index should be treated as a derived retrieval layer over the raw history, not the only long-term source of truth for user work context.
 
 ## Key Files
 - `app/main.py` - FastAPI app with health/ingest/stats/index/events/search endpoints and observer lifecycle

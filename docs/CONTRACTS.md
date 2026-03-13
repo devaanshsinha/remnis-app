@@ -132,7 +132,22 @@ Purpose: ingest one normalized event; dedupe/debounce decision done server-side.
 }
 ```
 
-## 3.3 `GET /search`
+## 3.3 `GET /index/status`
+Purpose: expose embedding/vector index readiness and indexed-count visibility.
+
+### Response 200
+```json
+{
+  "embedder_ready": true,
+  "embedder_model_name": "all-MiniLM-L6-v2",
+  "embedder_last_error": null,
+  "vector_store_ready": true,
+  "vector_store_last_error": null,
+  "indexed_event_count": 35
+}
+```
+
+## 3.4 `GET /search`
 Purpose: semantic retrieval.
 
 ### Query Params
@@ -144,6 +159,7 @@ Purpose: semantic retrieval.
 ```json
 {
   "query": "docker build error from yesterday",
+  "mode": "semantic",
   "k": 10,
   "offset": 0,
   "total_estimate": 34,
@@ -166,7 +182,7 @@ Forward-looking note:
 - Current v0.1 search shape is retrieval-oriented.
 - A later contract revision may add optional fields for query-time local reasoning output after the second local model is integrated.
 
-## 3.4 Error Shape (all endpoints)
+## 3.5 Error Shape (all endpoints)
 ```json
 {
   "error": {
@@ -215,4 +231,4 @@ Derived in UI:
 
 ## 7. Failure Mode References
 Failure semantics and retry policy are defined in `docs/FAILURE_BEHAVIOR.md`.
-Any API-level change there must remain compatible with the error shape in section 3.4.
+Any API-level change there must remain compatible with the error shape in section 3.5.

@@ -1,7 +1,7 @@
 # Remnis Context Guide
 
 ## What This Project Is
-Remnis is a local macOS memory engine for developers. It observes work context (initially app/window state), stores it as structured events, and makes it searchable using semantic embeddings.
+Remnis is a local macOS memory engine for developers. It observes work context (initially app/window state), stores it as structured raw events, and makes that history searchable through a derived semantic retrieval layer.
 
 ## Why This Exists
 Developer work context is fragmented across terminals, editors, browsers, and docs. Keyword search is often poor for memory recall. Remnis aims to let users search by intent, not exact text.
@@ -22,16 +22,20 @@ There are three major parts:
 Think of Remnis as a pipeline:
 1. Observe context changes.
 2. Normalize event data.
-3. Debounce and deduplicate.
-4. Embed text into vectors.
-5. Persist vectors + metadata.
-6. Query semantically and render results quickly.
+3. Persist accepted raw events locally.
+4. Derive cleaner retrieval/index documents from raw history.
+5. Embed text into vectors.
+6. Persist retrieval vectors + metadata.
+7. Query semantically and render results quickly.
 
 ## Strategy Clarification
 - The hardest part of this product is reliable, high-signal capture across sources.
 - Embeddings and heavier models improve retrieval quality, but they cannot compensate for poor capture.
+- The long-term value is not just window titles. Remnis should accumulate enough local developer context to answer later questions about prior work across editor activity, browser history, clipboard usage, and agent/chat sessions.
 - Product strategy is now explicitly:
   - capture-first architecture
+  - append-only local raw history where possible
+  - a cleaner derived retrieval layer for indexing and search quality
   - lightweight background processing with a local embedding/indexing model
   - heavier query-time reasoning with a separate local model only when the user explicitly invokes Remnis
 
@@ -39,15 +43,16 @@ Think of Remnis as a pipeline:
 1. Observer identifies active app/window.
 2. Event is normalized to canonical schema.
 3. Hash computed from normalized context.
-4. If debounce/dedupe passes, event is stored and later indexed with the local embedding model.
-5. Query is embedded and matched against stored vectors.
-6. Optional query-time reasoning model reranks or synthesizes the final answer.
-7. HUD displays results with app identity, snippet, relative time, and optional synthesized answer.
+4. Accepted raw events are stored in an append-only local history.
+5. Raw events are compacted or grouped into retrieval/index documents as needed for search quality.
+6. Query is embedded and matched against stored vectors.
+7. Optional query-time reasoning model reranks or synthesizes the final answer.
+8. HUD displays results with app identity, snippet, relative time, and optional synthesized answer.
 
 ## Core Terms
 - Observer: module that reads current macOS context.
-- Debounce: delay/filter that prevents noisy event writes.
-- Deduplication: hash-based skip logic for repeated context.
+- Debounce: delay/filter that prevents clearly noisy emissions from overwhelming the system.
+- Deduplication: source-aware suppression or compaction of repeated context, distinct from preserving the raw timeline.
 - Embedding: numeric vector representing semantic meaning of text.
 - Vector search: nearest-neighbor retrieval by embedding similarity.
 - Reasoning model: heavier local model used after retrieval for answer synthesis or reranking.
@@ -72,15 +77,15 @@ Think of Remnis as a pipeline:
 - Observer/ingest/search logic is implemented at baseline level:
   - observer v1 active-window capture
   - ingest dedupe/debounce
-  - JSONL persistence
-  - keyword search fallback endpoint
-- Neither local model tier is integrated yet in runtime:
-  - no local embedding/indexing pipeline
-  - no local query-time reasoning pipeline
+  - JSONL raw-event persistence
+  - semantic vector retrieval with keyword fallback
+- Local model 1 is now integrated in runtime for embedding/indexing when dependencies are available.
+- Local model 2 is still not integrated:
+  - no local query-time reasoning pipeline yet
 
 ## Planned Source Expansion
-- Browser adapter is the next high-value source (URL/title/snippet).
-- Clipboard and notification capture follow to improve cross-app recall robustness.
+- Browser adapter is the first higher-value source beyond active-window capture.
+- Clipboard, notification, editor/workspace, and agent/chat capture follow to improve cross-app recall robustness and later developer question answering.
 
 ## Where Confusion Usually Happens
 - IPC vs HTTP: Tauri commands call Rust functions; sidecar API is local HTTP. You can combine both.

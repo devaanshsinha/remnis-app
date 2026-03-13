@@ -6,7 +6,8 @@ Remnis is a local-first macOS developer productivity app that captures workflow 
 ## 2. Scope
 ### In Scope
 - Passive capture of active macOS application/window context.
-- Smart debouncing and deduplication before storage.
+- Local-first capture of rich workflow context over time, beginning with active-window and browser signals and expanding to higher-value sources such as editor/workspace state, clipboard history, and local agent/chat context.
+- Smart noise suppression and retrieval compaction without discarding useful accepted raw history.
 - Local vector indexing and semantic search.
 - Fast local API for querying indexed context.
 - Spotlight-style HUD for quick retrieval.
@@ -69,16 +70,20 @@ Remnis is a local-first macOS developer productivity app that captures workflow 
 
 ### 5.3 Deduplication
 - Compute content hash over normalized context payload.
-- Skip writes when new hash equals previous hash and interval threshold not met.
+- Use source-aware duplicate suppression for clearly redundant emissions.
+- Preserve accepted raw event history as an append-only local log whenever possible.
+- Allow the retrieval/index layer to compact repeated raw events into cleaner search documents without deleting the underlying raw timeline.
 
 ### 5.4 Storage
-- Store raw context, embedding vector, timestamps, and hash metadata.
-- Support append-only event history for auditability.
+- Store raw context, timestamps, and hash metadata in an append-only local event history.
+- Support a derived retrieval/index layer that may merge or compact raw events for search quality while preserving the raw timeline for auditability and later enrichment.
+- Store embeddings and retrieval metadata for indexed search documents derived from raw history.
 
 ### 5.5 Search API
 - Provide semantic query endpoint over localhost.
 - Return ranked results with score + metadata.
 - Support limit/offset style pagination.
+- Search should be able to answer developer-oriented lookup questions over prior local work context, not only exact keyword matches.
 - Support a second query-time reasoning pass over retrieved results.
 
 ### 5.6 HUD Retrieval

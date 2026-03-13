@@ -1,8 +1,8 @@
 # Project Status
 
 ## Snapshot
-- Date: 2026-03-10
-- Repo state: runnable local observer + ingest + persistence + keyword search baseline, with embedder/vector-store startup scaffolding added
+- Date: 2026-03-13
+- Repo state: runnable local observer + ingest + raw-event persistence + semantic search prototype, with local embedder/vector store verified on this machine
 
 ## Completed So Far
 - Established repository structure (`apps/desktop`, `sidecar`, `docs`).
@@ -15,15 +15,15 @@
   - `GET /index/status` embedder/vector-store readiness and indexed-count visibility
   - JSONL persistence (`sidecar/data/events.jsonl`)
   - `GET /events` filterable retrieval over persisted events
-  - `GET /search` with vector-first retrieval and keyword fallback
+  - `GET /search` with vector-first retrieval, search-mode visibility, and keyword fallback
   - browser repeat-window suppression for rapid duplicate extension emissions
-  - startup-time embedder and LanceDB vector-store initialization scaffolding
-  - startup backfill from JSONL into the vector index when dependencies are available
+  - startup-time embedder and LanceDB vector-store initialization
+  - startup backfill from JSONL into the vector index
   - vector index self-repair for older empty wrong-dimension tables and manifest rebuild for indexed-count recovery
 - Implemented desktop runtime baseline and UI foundation.
 
 ## Current Intent
-- Build robustness through capture-source expansion while progressing semantic retrieval.
+- Build a rich local developer-memory layer: preserve useful raw context, derive cleaner retrieval documents for search, and progress toward developer question answering over prior work.
 
 ## Strategic Decisions (Locked)
 - Capture quality is the primary product risk and priority.
@@ -36,10 +36,11 @@
   - local query-time reasoning model
 
 ## Open Items
+- Define the raw-event to retrieval-document compaction model.
 - Define clipboard + notification event schema extensions.
-- Replace keyword `/search` scoring with local embedding + LanceDB retrieval.
+- Define editor/workspace and agent/chat schema extensions.
 - Choose and integrate the local query-time reasoning model.
-- Add structured persistence/index schema for vector workflow.
+- Improve semantic retrieval quality and ranking over richer context.
 - Integrate search results into the final Spotlight-style HUD.
 
 ## Risks to Manage Early
@@ -48,4 +49,4 @@
 - Packaging complexity for sidecar distribution.
 
 ## Next Gate
-- Semantic `/search` returning embedding-ranked results from LanceDB, followed by a separate local query-time reasoning pass.
+- Validate semantic retrieval quality on real developer-memory queries, then implement the separate local query-time reasoning pass.
