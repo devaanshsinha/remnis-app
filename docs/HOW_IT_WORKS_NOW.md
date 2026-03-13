@@ -33,6 +33,7 @@ This describes the code that exists today, not future architecture.
 - Sidecar now attempts to initialize the local embedder and LanceDB-backed vector store on startup.
 - If the embedder and vector store are ready, sidecar backfills stored JSONL events into the vector index on startup.
 - The LanceDB vector index should be treated as a derived retrieval layer built from raw history, not the only source of truth for prior work context.
+- The current derived retrieval layer now has an explicit retrieval-document shape, even though it is still close to one retrieval document per raw event for current sources.
 - If an older empty vector table exists with the wrong embedding width, sidecar repairs it during the next successful index write so semantic indexing can recover without manual table cleanup.
 - If the vector table exists but the local manifest file is missing, sidecar rebuilds indexed-count bookkeeping from the table contents on startup.
 - If model/vector dependencies are missing, ingest still works and readiness remains degraded.
@@ -43,7 +44,7 @@ This describes the code that exists today, not future architecture.
   - `app_name`
   - `window_title`
   - `context_text`
-- Results are returned in contract-shaped form with score, pagination, and active search mode.
+- Results are returned in contract-shaped form with score, pagination, active search mode, and supporting raw-event IDs for drill-down.
 
 ## 3. Tauri Layer (`apps/desktop/src-tauri`)
 - Minimal Tauri v2 scaffold exists:

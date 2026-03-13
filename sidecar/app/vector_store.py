@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .schemas import ObservedContextEvent
+from .retrieval_documents import RetrievalDocument
 
 
 VECTOR_TABLE_NAME = "remnis_events"
@@ -23,7 +23,7 @@ class LocalVectorStore:
         self._db = None
         self._table = None
         self._manifest_path = data_dir / INDEX_MANIFEST_NAME
-        self._indexed_context_hashes: set[str] = set()
+        self._indexed_document_ids: set[str] = set()
         self._status = VectorStoreStatus(ready=False, last_error=None)
 
     def initialize(self) -> None:
@@ -45,6 +45,10 @@ class LocalVectorStore:
             table_exists = VECTOR_TABLE_NAME in self._db.table_names()
             if table_exists:
                 self._table = self._db.open_table(VECTOR_TABLE_NAME)
+                if not self._has_expected_schema():
+                    self._db.drop_table(VECTOR_TABLE_NAME)
+                    self._table = None
+                    table_exists = False
             else:
                 self._table = None
             self._load_manifest(reset=not table_exists)
@@ -68,32 +72,24 @@ class LocalVectorStore:
         return self._status.last_error
 
     def indexed_event_count(self) -> int:
-        return len(self._indexed_context_hashes)
+        return len(self._indexed_document_ids)
 
-    def has_context_hash(self, context_hash: str) -> bool:
-        return context_hash in self._indexed_context_hashes
+    def retrieval_document_count(self) -> int:
+        return len(self._indexed_document_ids)
 
-    def index_event(self, event: ObservedContextEvent, embedding: list[float]) -> bool:
+    def has_document_id(self, document_id: str) -> bool:
+        return document_id in self._indexed_document_ids
+
+    def index_document(self, document: RetrievalDocument, embedding: list[float]) -> bool:
         if not self.is_ready():
             raise RuntimeError("vector_store_not_ready")
-        if self.has_context_hash(event.context_hash):
+        if self.has_document_id(document.id):
             return False
 
-        row: dict[str, Any] = {
-            "id": str(event.id),
-            "timestamp_utc": event.timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "app_name": event.app_name,
-            "window_title": event.window_title,
-            "file_path": event.file_path,
-            "context_text": event.context_text,
-            "context_hash": event.context_hash,
-            "source": event.source.value,
-            "source_version": event.source_version,
-            "embedding": embedding,
-        }
+        row = document.to_vector_row(embedding)
         self._add_row(row)
-        self._indexed_context_hashes.add(event.context_hash)
-        self._append_manifest_entry(event.context_hash)
+        self._indexed_document_ids.add(document.id)
+        self._append_manifest_entry(document.id)
         return True
 
     def search_similar(self, embedding: list[float], limit: int) -> list[dict[str, Any]]:
@@ -140,44 +136,66 @@ class LocalVectorStore:
 
     def _load_manifest(self, reset: bool) -> None:
         if reset:
-            self._indexed_context_hashes = set()
+            self._indexed_document_ids = set()
             if self._manifest_path.exists():
                 self._manifest_path.unlink()
             return
 
         if not self._manifest_path.exists():
-            self._indexed_context_hashes = set()
+            self._indexed_document_ids = set()
             return
 
-        hashes: set[str] = set()
+        document_ids: set[str] = set()
         with self._manifest_path.open("r", encoding="utf-8") as handle:
             for line in handle:
-                context_hash = line.strip()
-                if context_hash:
-                    hashes.add(context_hash)
-        self._indexed_context_hashes = hashes
+                document_id = line.strip()
+                if document_id:
+                    document_ids.add(document_id)
+        self._indexed_document_ids = document_ids
 
     def _rebuild_manifest_from_table(self) -> None:
         if self._table is None:
-            self._indexed_context_hashes = set()
+            self._indexed_document_ids = set()
             return
 
         arrow_table = self._table.to_arrow()
-        hashes = {
+        document_ids = {
             str(value)
-            for value in arrow_table.column("context_hash").to_pylist()
+            for value in arrow_table.column("id").to_pylist()
             if value
         }
-        self._indexed_context_hashes = hashes
-        if not hashes:
+        self._indexed_document_ids = document_ids
+        if not document_ids:
             return
 
         with self._manifest_path.open("w", encoding="utf-8") as handle:
-            for context_hash in sorted(hashes):
-                handle.write(context_hash)
+            for document_id in sorted(document_ids):
+                handle.write(document_id)
                 handle.write("\n")
 
-    def _append_manifest_entry(self, context_hash: str) -> None:
+    def _append_manifest_entry(self, document_id: str) -> None:
         with self._manifest_path.open("a", encoding="utf-8") as handle:
-            handle.write(context_hash)
+            handle.write(document_id)
             handle.write("\n")
+
+    def _has_expected_schema(self) -> bool:
+        if self._table is None:
+            return False
+
+        field_names = set(self._table.schema.names)
+        required_fields = {
+            "id",
+            "time_start_utc",
+            "time_end_utc",
+            "app_name",
+            "window_title",
+            "summary_text",
+            "file_path",
+            "context_hash",
+            "source",
+            "source_version",
+            "document_version",
+            "raw_event_ids_json",
+            "embedding",
+        }
+        return required_fields.issubset(field_names)

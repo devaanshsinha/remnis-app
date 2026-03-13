@@ -46,10 +46,11 @@
 - `observer_ready` should become `true` when observer capture loop is functioning.
 - `db_ready` and `embedder_ready` now reflect actual sidecar dependency initialization state.
 - `/observer/stats` includes `observer_state` and `last_error_code` for degraded-state diagnostics.
-- `/index/status` exposes embedder readiness, vector-store readiness, indexed count, and last known dependency errors.
+- `/index/status` exposes embedder readiness, vector-store readiness, raw-event count, retrieval-document count, indexed count, and last known dependency errors.
 - `/events` provides filterable recent-history retrieval for UI and debugging.
 - `/search` supports deterministic filters (`source`, `app_name`, `from_ts`, `to_ts`).
 - `/search` now attempts vector retrieval when the embedder and LanceDB store are ready, and falls back to keyword scoring otherwise.
-- `/search` reports its active mode (`semantic` or `keyword_fallback`) in the response payload.
+- `/search` reports its active mode (`semantic` or `keyword_fallback`) and supporting raw-event IDs in the response payload.
+- The vector index now stores explicit retrieval documents derived from raw events instead of assuming the raw event history itself is the final search model.
 - The finished product also requires a second local query-time reasoning layer on top of retrieval.
 - `/ingest/browser` maps browser events into canonical ingest events and reuses dedupe/debounce.

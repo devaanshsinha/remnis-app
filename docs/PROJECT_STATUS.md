@@ -7,6 +7,7 @@
 ## Completed So Far
 - Established repository structure (`apps/desktop`, `sidecar`, `docs`).
 - Finalized foundational docs and contracts.
+- Added explicit design guidance for raw local history vs derived retrieval/index documents.
 - Implemented sidecar runtime:
   - `GET /health`
   - `POST /ingest` with schema/hash validation and dedupe/debounce
@@ -20,6 +21,7 @@
   - startup-time embedder and LanceDB vector-store initialization
   - startup backfill from JSONL into the vector index
   - vector index self-repair for older empty wrong-dimension tables and manifest rebuild for indexed-count recovery
+  - first retrieval-document builder over raw events, with search results linking back to supporting raw event IDs
 - Implemented desktop runtime baseline and UI foundation.
 
 ## Current Intent
@@ -36,7 +38,7 @@
   - local query-time reasoning model
 
 ## Open Items
-- Define the raw-event to retrieval-document compaction model.
+- Add compaction/grouping so retrieval documents become cleaner than one-document-per-event for current sources.
 - Define clipboard + notification event schema extensions.
 - Define editor/workspace and agent/chat schema extensions.
 - Choose and integrate the local query-time reasoning model.

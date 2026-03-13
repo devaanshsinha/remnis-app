@@ -101,6 +101,7 @@ npm run tauri dev
 
 - `requirements.md` baseline product and engineering requirements
 - `docs/CONTEXT.md` system context and mental model
+- `docs/RAW_RETRIEVAL_MODEL.md` raw local history vs derived retrieval/index design
 - `docs/CONTRACTS.md` event and API contract definitions
 - `docs/FAILURE_BEHAVIOR.md` degraded modes and recovery behavior
 - `docs/ACCEPTANCE_CRITERIA.md` phase completion criteria

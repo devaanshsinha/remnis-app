@@ -16,7 +16,10 @@ What to do:
 - Add browser ingest dedupe improvements for repeated rapid tab emissions: completed.
 - Wire desktop UI to `/events` and `/search` instead of health-only rendering: completed.
 - Verify semantic retrieval quality with real developer-memory queries: next.
-- Define the split between append-only raw events and derived retrieval/index documents: next.
+- Define the split between append-only raw events and derived retrieval/index documents: completed in `docs/RAW_RETRIEVAL_MODEL.md`.
+- Implement the first explicit retrieval-document builder over current sources: completed.
+- Add compaction/grouping heuristics so retrieval documents stop mirroring raw events 1:1: next.
+- Surface drill-down from search results back to supporting raw history: next.
 
 Why:
 - This turns the current prototype into a better local memory layer instead of a thin event viewer.

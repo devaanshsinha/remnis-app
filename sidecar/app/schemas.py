@@ -120,6 +120,8 @@ class IndexStatusResponse(BaseModel):
     embedder_last_error: str | None = None
     vector_store_ready: bool
     vector_store_last_error: str | None = None
+    raw_event_count: int
+    retrieval_document_count: int
     indexed_event_count: int
 
 
@@ -133,6 +135,7 @@ class SearchResult(BaseModel):
     score: float
     context_hash: str
     source_version: str
+    supporting_raw_event_ids: list[UUID]
 
 
 class SearchResponse(BaseModel):

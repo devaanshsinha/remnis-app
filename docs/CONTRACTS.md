@@ -143,6 +143,8 @@ Purpose: expose embedding/vector index readiness and indexed-count visibility.
   "embedder_last_error": null,
   "vector_store_ready": true,
   "vector_store_last_error": null,
+  "raw_event_count": 78,
+  "retrieval_document_count": 35,
   "indexed_event_count": 35
 }
 ```
@@ -172,7 +174,10 @@ Purpose: semantic retrieval.
       "context_text": "failed to solve: process '/bin/sh -c npm ci'",
       "score": 0.86,
       "context_hash": "0f6c5...",
-      "source_version": "event.v1"
+      "source_version": "event.v1",
+      "supporting_raw_event_ids": [
+        "31f87340-12a9-49f7-a7c0-e4fd6fcb0866"
+      ]
     }
   ]
 }

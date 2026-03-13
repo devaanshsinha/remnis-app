@@ -15,6 +15,8 @@ from fastapi.responses import JSONResponse
 from .embedder import LocalEmbedder
 from .hash_utils import compute_context_hash, is_context_hash_valid
 from .observer import ActiveWindowObserver
+from .retrieval_documents import build_retrieval_document
+from .search_utils import parse_raw_event_ids
 from .schemas import (
     BrowserIngestRequest,
     DebounceDecision,
@@ -140,6 +142,7 @@ def observer_stats() -> ObserverStatsResponse:
 
 @app.get("/index/status", response_model=IndexStatusResponse)
 def index_status() -> IndexStatusResponse:
+    retrieval_document_count = _vector_store.retrieval_document_count() if _vector_store else 0
     return IndexStatusResponse(
         embedder_ready=_embedder.is_ready() if _embedder else False,
         embedder_model_name=_embedder.model_name() if _embedder else "uninitialized",
@@ -148,7 +151,9 @@ def index_status() -> IndexStatusResponse:
         vector_store_last_error=(
             _vector_store.last_error() if _vector_store else "vector_store_not_started"
         ),
-        indexed_event_count=_vector_store.indexed_event_count() if _vector_store else 0,
+        raw_event_count=len(_load_persisted_observed_events()),
+        retrieval_document_count=retrieval_document_count,
+        indexed_event_count=retrieval_document_count,
     )
 
 
@@ -511,11 +516,11 @@ def search(
                 try:
                     event = ObservedContextEvent(
                         id=row["id"],
-                        timestamp_utc=row["timestamp_utc"],
+                        timestamp_utc=row["time_end_utc"],
                         app_name=row["app_name"],
                         window_title=row["window_title"],
                         file_path=row.get("file_path"),
-                        context_text=row["context_text"],
+                        context_text=row["summary_text"],
                         source=row["source"],
                         capture_confidence=None,
                         context_hash=row["context_hash"],
@@ -537,6 +542,9 @@ def search(
                 score = _semantic_score(row.get("_distance"))
                 if score <= 0:
                     continue
+                event_dump["supporting_raw_event_ids"] = parse_raw_event_ids(
+                    row.get("raw_event_ids_json")
+                )
                 scored.append((score, str(event.timestamp_utc), event_dump))
             if scored:
                 search_mode = "semantic"
@@ -556,6 +564,7 @@ def search(
                 continue
 
             event_dump = event.model_dump(mode="json")
+            event_dump["supporting_raw_event_ids"] = [str(event.id)]
             score = _search_score(event_dump, query_tokens)
             if score <= 0:
                 continue
@@ -578,6 +587,7 @@ def search(
                 score=round(float(score), 4),
                 context_hash=str(event.get("context_hash", "")),
                 source_version=str(event.get("source_version", "event.v1")),
+                supporting_raw_event_ids=event.get("supporting_raw_event_ids", []),
             )
         )
 
@@ -781,12 +791,13 @@ def _index_stored_event(event: ObservedContextEvent) -> None:
         return
     if not _embedder.is_ready() or not _vector_store.is_ready():
         return
-    if _vector_store.has_context_hash(event.context_hash):
-        return
 
     try:
-        embedding = _embedder.encode_text(event.context_text)
-        _vector_store.index_event(event, embedding)
+        document = build_retrieval_document(event)
+        if _vector_store.has_document_id(document.id):
+            return
+        embedding = _embedder.encode_text(document.embedding_text())
+        _vector_store.index_document(document, embedding)
     except Exception:
         # Indexing failures should degrade search quality, not break ingest.
         return

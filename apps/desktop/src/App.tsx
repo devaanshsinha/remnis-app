@@ -20,6 +20,8 @@ type IndexStatusResponse = {
   embedder_last_error: string | null;
   vector_store_ready: boolean;
   vector_store_last_error: string | null;
+  raw_event_count: number;
+  retrieval_document_count: number;
   indexed_event_count: number;
 };
 
@@ -49,6 +51,7 @@ type SearchResult = {
   score: number;
   context_hash: string;
   source_version: string;
+  supporting_raw_event_ids: string[];
 };
 
 type SearchResponse = {
@@ -279,8 +282,10 @@ export default function App() {
         )}
         {indexStatus && (
           <dl className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-2 border-t pt-3 text-sm">
-            <dt className="uppercase tracking-wide text-muted-foreground">Index Count</dt>
-            <dd>{indexStatus.indexed_event_count}</dd>
+            <dt className="uppercase tracking-wide text-muted-foreground">Raw Events</dt>
+            <dd>{indexStatus.raw_event_count}</dd>
+            <dt className="uppercase tracking-wide text-muted-foreground">Retrieval Docs</dt>
+            <dd>{indexStatus.retrieval_document_count}</dd>
             <dt className="uppercase tracking-wide text-muted-foreground">Embedder Model</dt>
             <dd>{indexStatus.embedder_model_name}</dd>
             <dt className="uppercase tracking-wide text-muted-foreground">Vector Store</dt>
