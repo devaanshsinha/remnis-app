@@ -246,182 +246,189 @@ export default function App() {
   }, []);
 
   return (
-    <main className="mx-auto max-w-2xl p-5">
-      <header className="mb-4 flex items-center justify-between border-b pb-3">
-        <h1>Remnis</h1>
-        <Button
-          onClick={() => void fetchData()}
-          disabled={loading}
-          size="sm"
-          className="w-[78px]"
-        >
-          {loading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : "Refresh"}
-        </Button>
-      </header>
-
-      <section className="space-y-2">
-        {error && <p className="text-sm font-medium">Sidecar unavailable: {error}</p>}
-        {!error && !health && <p className="text-sm">No data yet.</p>}
-        {health && (
-          <dl className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-2 text-sm">
-            <dt className="uppercase tracking-wide text-muted-foreground">Status</dt>
-            <dd>{health.status}</dd>
-            <dt className="uppercase tracking-wide text-muted-foreground">Service</dt>
-            <dd>{health.service}</dd>
-            <dt className="uppercase tracking-wide text-muted-foreground">Version</dt>
-            <dd>{health.version}</dd>
-            <dt className="uppercase tracking-wide text-muted-foreground">Time (UTC)</dt>
-            <dd>{health.time_utc}</dd>
-            <dt className="uppercase tracking-wide text-muted-foreground">Observer</dt>
-            <dd>{health.readiness.observer_ready ? "ready" : "not ready"}</dd>
-            <dt className="uppercase tracking-wide text-muted-foreground">Database</dt>
-            <dd>{health.readiness.db_ready ? "ready" : "not ready"}</dd>
-            <dt className="uppercase tracking-wide text-muted-foreground">Embedder</dt>
-            <dd>{health.readiness.embedder_ready ? "ready" : "not ready"}</dd>
-          </dl>
-        )}
-        {indexStatus && (
-          <dl className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-2 border-t pt-3 text-sm">
-            <dt className="uppercase tracking-wide text-muted-foreground">Raw Events</dt>
-            <dd>{indexStatus.raw_event_count}</dd>
-            <dt className="uppercase tracking-wide text-muted-foreground">Retrieval Docs</dt>
-            <dd>{indexStatus.retrieval_document_count}</dd>
-            <dt className="uppercase tracking-wide text-muted-foreground">Embedder Model</dt>
-            <dd>{indexStatus.embedder_model_name}</dd>
-            <dt className="uppercase tracking-wide text-muted-foreground">Vector Store</dt>
-            <dd>{indexStatus.vector_store_ready ? "ready" : "not ready"}</dd>
-            <dt className="uppercase tracking-wide text-muted-foreground">Embedder Error</dt>
-            <dd>{indexStatus.embedder_last_error ?? "none"}</dd>
-            <dt className="uppercase tracking-wide text-muted-foreground">Vector Error</dt>
-            <dd>{indexStatus.vector_store_last_error ?? "none"}</dd>
-          </dl>
-        )}
-      </section>
-
-      <section className="mt-6 space-y-3">
-        <form
-          className="flex gap-2 border-b pb-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void fetchData();
-          }}
-        >
-          <input
-            className="h-9 flex-1 rounded-md border px-2"
-            placeholder="Search your context"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          <Button type="submit" size="sm" disabled={loading}>
-            Search
-          </Button>
-        </form>
-
-        <form
-          className="grid gap-2 border-b pb-3 text-sm sm:grid-cols-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void fetchData();
-          }}
-        >
-          <input
-            className="h-9 rounded-md border px-2"
-            placeholder="Filter app name (e.g. Google Chrome)"
-            value={appFilter}
-            onChange={(event) => setAppFilter(event.target.value)}
-          />
-          <select
-            className="h-9 rounded-md border px-2"
-            value={sourceFilter}
-            onChange={(event) =>
-              setSourceFilter(event.target.value as (typeof sourceOptions)[number]["value"])
-            }
-          >
-            {sourceOptions.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <input
-            className="h-9 rounded-md border px-2"
-            type="datetime-local"
-            value={fromTs}
-            onChange={(event) => setFromTs(event.target.value)}
-          />
-          <input
-            className="h-9 rounded-md border px-2"
-            type="datetime-local"
-            value={toTs}
-            onChange={(event) => setToTs(event.target.value)}
-          />
-          <Button type="submit" size="sm" disabled={loading}>
-            Apply Filters
-          </Button>
+    <main className="settings-shell">
+      <div className="settings-content">
+        <header className="mb-4 flex items-center justify-between border-b pb-3">
+          <h1>Remnis</h1>
           <Button
-            type="button"
-            size="sm"
-            variant="outline"
+            onClick={() => void fetchData()}
             disabled={loading}
-            onClick={() => {
-              setAppFilter("");
-              setSourceFilter("");
-              setFromTs("");
-              setToTs("");
-              void fetchData({
-                appFilter: "",
-                sourceFilter: "",
-                fromTs: "",
-                toTs: "",
-              });
+            size="sm"
+            className="w-[78px]"
+          >
+            {loading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : "Refresh"}
+          </Button>
+        </header>
+
+        <section className="space-y-2">
+          {error && <p className="text-sm font-medium">Sidecar unavailable: {error}</p>}
+          {!error && !health && <p className="text-sm">No data yet.</p>}
+          {health && (
+            <dl className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-2 text-sm">
+              <dt className="uppercase tracking-wide text-muted-foreground">Status</dt>
+              <dd>{health.status}</dd>
+              <dt className="uppercase tracking-wide text-muted-foreground">Service</dt>
+              <dd>{health.service}</dd>
+              <dt className="uppercase tracking-wide text-muted-foreground">Version</dt>
+              <dd>{health.version}</dd>
+              <dt className="uppercase tracking-wide text-muted-foreground">Time (UTC)</dt>
+              <dd>{health.time_utc}</dd>
+              <dt className="uppercase tracking-wide text-muted-foreground">Observer</dt>
+              <dd>{health.readiness.observer_ready ? "ready" : "not ready"}</dd>
+              <dt className="uppercase tracking-wide text-muted-foreground">Database</dt>
+              <dd>{health.readiness.db_ready ? "ready" : "not ready"}</dd>
+              <dt className="uppercase tracking-wide text-muted-foreground">Embedder</dt>
+              <dd>{health.readiness.embedder_ready ? "ready" : "not ready"}</dd>
+            </dl>
+          )}
+          {indexStatus && (
+            <dl className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-2 border-t pt-3 text-sm">
+              <dt className="uppercase tracking-wide text-muted-foreground">Raw Events</dt>
+              <dd>{indexStatus.raw_event_count}</dd>
+              <dt className="uppercase tracking-wide text-muted-foreground">Retrieval Docs</dt>
+              <dd>{indexStatus.retrieval_document_count}</dd>
+              <dt className="uppercase tracking-wide text-muted-foreground">Embedder Model</dt>
+              <dd>{indexStatus.embedder_model_name}</dd>
+              <dt className="uppercase tracking-wide text-muted-foreground">Vector Store</dt>
+              <dd>{indexStatus.vector_store_ready ? "ready" : "not ready"}</dd>
+              <dt className="uppercase tracking-wide text-muted-foreground">Embedder Error</dt>
+              <dd>{indexStatus.embedder_last_error ?? "none"}</dd>
+              <dt className="uppercase tracking-wide text-muted-foreground">Vector Error</dt>
+              <dd>{indexStatus.vector_store_last_error ?? "none"}</dd>
+            </dl>
+          )}
+        </section>
+
+        <section className="mt-6 space-y-3">
+          <form
+            className="flex gap-2 border-b pb-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void fetchData();
             }}
           >
-            Clear Filters
-          </Button>
-        </form>
+            <input
+              className="h-9 flex-1 rounded-md border px-2"
+              placeholder="Search your context"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            <Button type="submit" size="sm" disabled={loading}>
+              Search
+            </Button>
+          </form>
 
-        {query.trim() && (
-          <section className="space-y-3 border-b pb-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm uppercase tracking-wide text-muted-foreground">
-                Search Results
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                {searchMode ?? "keyword_fallback"} · showing {searchResults.length} of {searchTotal}
-              </p>
-            </div>
-            {searchResults.length === 0 && !error && <p className="text-sm">No matching events.</p>}
-            {searchResults.map((result) => (
-              <article key={result.id} className="space-y-1 border-b pb-3">
-                <p className="text-sm font-medium">{result.window_title}</p>
+          <form
+            className="grid gap-2 border-b pb-3 text-sm sm:grid-cols-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void fetchData();
+            }}
+          >
+            <input
+              className="h-9 rounded-md border px-2"
+              placeholder="Filter app name (e.g. Google Chrome)"
+              value={appFilter}
+              onChange={(event) => setAppFilter(event.target.value)}
+            />
+            <select
+              className="h-9 rounded-md border px-2"
+              value={sourceFilter}
+              onChange={(event) =>
+                setSourceFilter(event.target.value as (typeof sourceOptions)[number]["value"])
+              }
+            >
+              {sourceOptions.map((option) => (
+                <option key={option.value || "all"} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <input
+              className="h-9 rounded-md border px-2"
+              type="datetime-local"
+              value={fromTs}
+              onChange={(event) => setFromTs(event.target.value)}
+            />
+            <input
+              className="h-9 rounded-md border px-2"
+              type="datetime-local"
+              value={toTs}
+              onChange={(event) => setToTs(event.target.value)}
+            />
+            <Button type="submit" size="sm" disabled={loading}>
+              Apply Filters
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={loading}
+              onClick={() => {
+                setAppFilter("");
+                setSourceFilter("");
+                setFromTs("");
+                setToTs("");
+                void fetchData({
+                  appFilter: "",
+                  sourceFilter: "",
+                  fromTs: "",
+                  toTs: "",
+                });
+              }}
+            >
+              Clear Filters
+            </Button>
+          </form>
+
+          {query.trim() && (
+            <section className="space-y-3 border-b pb-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm uppercase tracking-wide text-muted-foreground">
+                  Search Results
+                </h2>
                 <p className="text-xs text-muted-foreground">
-                  {result.app_name} · score {result.score.toFixed(2)}
+                  {searchMode ?? "keyword_fallback"} · showing {searchResults.length} of{" "}
+                  {searchTotal}
                 </p>
-                <p className="text-xs">{result.context_text}</p>
-                <p className="text-xs text-muted-foreground">{result.timestamp_utc}</p>
-              </article>
-            ))}
-          </section>
-        )}
+              </div>
+              {searchResults.length === 0 && !error && (
+                <p className="text-sm">No matching events.</p>
+              )}
+              {searchResults.map((result) => (
+                <article key={result.id} className="space-y-1 border-b pb-3">
+                  <p className="text-sm font-medium">{result.window_title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {result.app_name} · score {result.score.toFixed(2)}
+                  </p>
+                  <p className="text-xs">{result.context_text}</p>
+                  <p className="text-xs text-muted-foreground">{result.timestamp_utc}</p>
+                </article>
+              ))}
+            </section>
+          )}
 
-        <div className="flex items-center justify-between border-b pb-2">
-          <h2 className="text-sm uppercase tracking-wide text-muted-foreground">Recent Events</h2>
-          <p className="text-xs text-muted-foreground">
-            showing {events.length} of {eventTotal}
-          </p>
-        </div>
-        {events.length === 0 && !error && <p className="text-sm">No events yet.</p>}
-        {events.map((event) => (
-          <article key={event.id} className="space-y-1 border-b pb-3">
-            <p className="text-sm font-medium">{event.window_title}</p>
+          <div className="flex items-center justify-between border-b pb-2">
+            <h2 className="text-sm uppercase tracking-wide text-muted-foreground">
+              Recent Events
+            </h2>
             <p className="text-xs text-muted-foreground">
-              {event.app_name} · {event.source}
+              showing {events.length} of {eventTotal}
             </p>
-            {event.file_path && <p className="text-xs break-all">{event.file_path}</p>}
-            <p className="text-xs text-muted-foreground">{event.timestamp_utc}</p>
-          </article>
-        ))}
-      </section>
+          </div>
+          {events.length === 0 && !error && <p className="text-sm">No events yet.</p>}
+          {events.map((event) => (
+            <article key={event.id} className="space-y-1 border-b pb-3">
+              <p className="text-sm font-medium">{event.window_title}</p>
+              <p className="text-xs text-muted-foreground">
+                {event.app_name} · {event.source}
+              </p>
+              {event.file_path && <p className="text-xs break-all">{event.file_path}</p>}
+              <p className="text-xs text-muted-foreground">{event.timestamp_utc}</p>
+            </article>
+          ))}
+        </section>
+      </div>
     </main>
   );
 }

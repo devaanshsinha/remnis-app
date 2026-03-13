@@ -1,1 +1,1 @@
-{}
+{"desktop-default":{"identifier":"desktop-default","description":"Default permissions for the Remnis search and settings windows.","local":true,"windows":["search","settings"],"permissions":["core:default"]}}

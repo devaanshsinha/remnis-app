@@ -15,14 +15,133 @@
   --radius: 0.5rem;
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+  background: transparent;
+}
+
 @layer base {
   * {
     @apply border-border;
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
     font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Helvetica Neue",
       Helvetica, Arial, sans-serif;
+  }
+}
+
+body[data-window="search"] {
+  overflow: hidden;
+}
+
+body[data-window="settings"] {
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0) 46%),
+    linear-gradient(180deg, #f7f5ef 0%, #ece7dd 100%);
+}
+
+@layer components {
+  .settings-shell {
+    @apply min-h-screen p-6 text-slate-900;
+  }
+
+  .settings-content {
+    @apply mx-auto max-w-2xl rounded-[28px] border border-black/5 bg-white/90 p-5 shadow-[0_30px_90px_rgba(15,23,42,0.14)];
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .launcher-shell {
+    @apply flex min-h-screen items-start justify-center px-3 pt-5;
+    background: transparent;
+  }
+
+  .launcher-pill {
+    position: relative;
+    display: flex;
+    width: min(720px, calc(100vw - 24px));
+    min-height: 76px;
+    align-items: center;
+    gap: 12px;
+    border-radius: 9999px;
+    padding: 14px 16px 14px 18px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.18)),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.08));
+    border: 1px solid rgba(255, 255, 255, 0.34);
+    box-shadow:
+      0 28px 90px rgba(15, 23, 42, 0.26),
+      inset 0 1px 0 rgba(255, 255, 255, 0.58),
+      inset 0 -16px 28px rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(26px) saturate(190%);
+    -webkit-backdrop-filter: blur(26px) saturate(190%);
+    isolation: isolate;
+  }
+
+  .launcher-pill::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.06) 45%, rgba(255, 255, 255, 0.02)),
+      radial-gradient(circle at top left, rgba(255, 255, 255, 0.48), transparent 44%);
+    opacity: 0.95;
+    pointer-events: none;
+  }
+
+  .launcher-pill > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .launcher-icon {
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-full;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.14));
+    border: 1px solid rgba(255, 255, 255, 0.34);
+    color: rgba(30, 41, 59, 0.72);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      0 10px 24px rgba(15, 23, 42, 0.12);
+  }
+
+  .launcher-input {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    color: rgba(15, 23, 42, 0.92);
+    font-size: 1.2rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    outline: none;
+  }
+
+  .launcher-input::placeholder {
+    color: rgba(51, 65, 85, 0.52);
+  }
+
+  .launcher-settings-button {
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition duration-150 ease-out;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0.12));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(30, 41, 59, 0.68);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.42),
+      0 10px 24px rgba(15, 23, 42, 0.1);
+  }
+
+  .launcher-settings-button:hover {
+    transform: translateY(-1px);
+    color: rgba(15, 23, 42, 0.92);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.18));
+  }
+
+  .launcher-settings-button:focus-visible {
+    outline: 2px solid rgba(15, 23, 42, 0.28);
+    outline-offset: 3px;
   }
 }

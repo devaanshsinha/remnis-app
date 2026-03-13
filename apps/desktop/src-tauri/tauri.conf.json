@@ -10,12 +10,33 @@
     "beforeBuildCommand": "npm run build"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
+        "label": "settings",
         "title": "Remnis",
+        "create": false,
         "width": 900,
         "height": 620,
+        "center": true,
         "resizable": true
+      },
+      {
+        "label": "search",
+        "title": "Remnis Search",
+        "width": 780,
+        "height": 128,
+        "center": true,
+        "visible": false,
+        "transparent": true,
+        "decorations": false,
+        "shadow": false,
+        "resizable": false,
+        "maximizable": false,
+        "minimizable": false,
+        "alwaysOnTop": true,
+        "visibleOnAllWorkspaces": true,
+        "acceptFirstMouse": true
       }
     ],
     "security": {

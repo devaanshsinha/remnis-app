@@ -71,7 +71,17 @@ Think of Remnis as a pipeline:
 - Search can return plausible prior events for natural language queries.
 
 ## Current Implemented Slice
-- Desktop app can start and fetch sidecar health.
+- Desktop app now has two distinct surfaces:
+  - a transparent Spotlight-style launcher window
+  - a separate settings/details window created on demand
+- On macOS, the desktop app runs in accessory mode and is hidden from the Dock by default.
+- The launcher currently supports:
+  - `Option+Space` toggle
+  - immediate input autofocus when shown
+  - hide on `Escape`
+  - hide on outside click / blur
+  - open-settings action from the launcher pill
+- The settings window can start and fetch sidecar health.
 - Sidecar returns contract-shaped health response with readiness flags.
 - UI stack already includes Tailwind + shadcn-compatible primitives for future screens.
 - Observer/ingest/search logic is implemented at baseline level:

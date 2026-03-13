@@ -22,7 +22,13 @@
   - startup backfill from JSONL into the vector index
   - vector index self-repair for older empty wrong-dimension tables and manifest rebuild for indexed-count recovery
   - first retrieval-document builder over raw events, with search results linking back to supporting raw event IDs
-- Implemented desktop runtime baseline and UI foundation.
+ - Implemented desktop runtime baseline and UI foundation.
+- Split desktop runtime into:
+  - a transparent Spotlight-style launcher window
+  - a separate settings/details window
+- Registered global launcher shortcut (`Option+Space`) in Tauri runtime.
+- Added launcher input autofocus, `Escape` hide behavior, click-away hide behavior, and settings-window open action.
+- Switched macOS desktop runtime into accessory mode with Dock-hidden launcher behavior.
 
 ## Current Intent
 - Build a rich local developer-memory layer: preserve useful raw context, derive cleaner retrieval documents for search, and progress toward developer question answering over prior work.
@@ -43,7 +49,7 @@
 - Define editor/workspace and agent/chat schema extensions.
 - Choose and integrate the local query-time reasoning model.
 - Improve semantic retrieval quality and ranking over richer context.
-- Integrate search results into the final Spotlight-style HUD.
+- Integrate live search results and richer actions into the new Spotlight-style launcher.
 
 ## Risks to Manage Early
 - macOS permission complexity (Accessibility/AX behavior).

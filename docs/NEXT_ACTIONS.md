@@ -54,8 +54,9 @@ What it produces:
 
 ## 9. Connect HUD and Hotkey
 What to do:
-- Implement spotlight-style HUD query flow and keyboard interactions.
-- Register global hotkey in Tauri.
+- Implement spotlight-style HUD query flow and richer keyboard interactions beyond show/hide.
+- Global hotkey in Tauri: completed for launcher toggle (`Option+Space`).
+- Transparent launcher shell and launcher dismissal behaviors: completed.
 - Make the HUD able to present both raw recall results and later synthesized answers.
 
 Why:

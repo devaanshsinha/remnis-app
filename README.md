@@ -31,7 +31,12 @@ Developer context is fragmented across editors, terminals, browsers, chat tools,
 
 ## What Is Implemented Right Now
 
-- Desktop app scaffold with Tauri + React + TypeScript
+- Desktop app with Tauri + React + TypeScript
+- Transparent Spotlight-style launcher window
+- Separate settings/details window created on demand
+- Global shortcut launcher toggle on macOS (`Option+Space`)
+- Launcher autofocus, `Escape` hide, click-away hide, and settings action
+- macOS accessory-mode runtime with Dock-hidden launcher behavior
 - Sidecar service with FastAPI
 - `GET /health` endpoint with readiness flags
 - `POST /ingest` endpoint with schema validation and hash checks
@@ -57,7 +62,7 @@ Developer context is fragmented across editors, terminals, browsers, chat tools,
 - Local query-time reasoning model integration
 - Richer source integrations such as clipboard, editor/workspace, and agent/chat context
 - A cleaner derived retrieval/document layer over the raw event timeline
-- Full Spotlight-style HUD and global hotkey UX
+- Live search results and richer actions inside the new launcher surface
 
 ## Repository Layout
 

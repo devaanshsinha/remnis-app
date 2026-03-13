@@ -5,7 +5,15 @@ This describes the code that exists today, not future architecture.
 ## 1. Desktop Layer (`apps/desktop`)
 - Stack: Vite + React + TypeScript + Tauri scaffold.
 - Entry point: `src/main.tsx`.
-- Main screen: `src/App.tsx`.
+- Window split:
+  - `search` window: transparent Spotlight-style launcher surface
+  - `settings` window: normal desktop window for inspector/settings details, created on demand
+- On macOS, Tauri startup switches the app to `ActivationPolicy::Accessory` and hides the Dock icon.
+- Search UI: `src/Launcher.tsx`.
+- Settings UI: `src/App.tsx`.
+- Tauri runtime registers `Option+Space` to toggle the launcher window.
+- Launcher emits a focus event so the search input is focused immediately on show.
+- Launcher hides on `Escape` and can open the settings window from its trailing action.
 
 ## 2. Sidecar Layer (`sidecar`)
 - Stack: FastAPI + background observer loop.
@@ -47,13 +55,16 @@ This describes the code that exists today, not future architecture.
 - Results are returned in contract-shaped form with score, pagination, active search mode, and supporting raw-event IDs for drill-down.
 
 ## 3. Tauri Layer (`apps/desktop/src-tauri`)
-- Minimal Tauri v2 scaffold exists:
-  - `Cargo.toml`, `build.rs`, `src/main.rs`, `tauri.conf.json`.
+- Tauri runtime now manages:
+  - a transparent `search` window
+  - a normal `settings` window
+  - global shortcut registration for `Option+Space`
+  - show/hide/open commands for launcher and settings behavior
 - A valid RGBA icon exists at `src-tauri/icons/icon.png`.
 
 ## 4. What Is Not Implemented Yet
 - Local query-time reasoning model integration.
-- HUD command palette and global hotkey flow.
+- Launcher search results UI and final HUD workflow beyond the pill-style search surface.
 
 ## 5. Quick Run Sequence
 1. Start sidecar:
