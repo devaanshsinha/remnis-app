@@ -1,0 +1,14 @@
+README.md
+pyproject.toml
+app/__init__.py
+app/embedder.py
+app/hash_utils.py
+app/main.py
+app/observer.py
+app/schemas.py
+app/vector_store.py
+remnis_sidecar.egg-info/PKG-INFO
+remnis_sidecar.egg-info/SOURCES.txt
+remnis_sidecar.egg-info/dependency_links.txt
+remnis_sidecar.egg-info/requires.txt
+remnis_sidecar.egg-info/top_level.txt

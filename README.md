@@ -69,11 +69,14 @@ Developer context is fragmented across editors, terminals, browsers, chat tools,
 
 ```bash
 cd sidecar
-python3 -m venv .venv
-.venv/bin/python -m pip install -U pip
-.venv/bin/python -m pip install fastapi pydantic 'uvicorn[standard]'
-.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8765 --reload
+uv sync
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8765 --reload
 ```
+
+Notes:
+- The sidecar uses `sidecar/.python-version` to prefer Python `3.13`.
+- `uv` will create the virtual environment for you during `uv sync`.
+- We intentionally avoid Python `3.14` here because one of the ML dependencies (`sentence-transformers`) does not currently advertise `3.14` support.
 
 ### 2. Start desktop app
 

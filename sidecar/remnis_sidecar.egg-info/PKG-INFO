@@ -1,3 +1,15 @@
+Metadata-Version: 2.4
+Name: remnis-sidecar
+Version: 0.1.0
+Summary: Remnis local sidecar service
+Requires-Python: <3.14,>=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi>=0.116.0
+Requires-Dist: lancedb>=0.24.0
+Requires-Dist: sentence-transformers>=5.1.0
+Requires-Dist: torch>=2.8.0
+Requires-Dist: uvicorn>=0.35.0
+
 # Python Sidecar
 
 ## Current Status
