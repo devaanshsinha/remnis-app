@@ -113,6 +113,16 @@ class ObserverStatsResponse(BaseModel):
     last_stored_timestamp_utc: str | None = None
 
 
+class IndexStatusResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    embedder_ready: bool
+    embedder_model_name: str
+    embedder_last_error: str | None = None
+    vector_store_ready: bool
+    vector_store_last_error: str | None = None
+    indexed_event_count: int
+
+
 class SearchResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
     id: UUID

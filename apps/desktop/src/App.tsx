@@ -14,6 +14,15 @@ type HealthResponse = {
   };
 };
 
+type IndexStatusResponse = {
+  embedder_ready: boolean;
+  embedder_model_name: string;
+  embedder_last_error: string | null;
+  vector_store_ready: boolean;
+  vector_store_last_error: string | null;
+  indexed_event_count: number;
+};
+
 type EventItem = {
   id: string;
   timestamp_utc: string;
@@ -53,6 +62,7 @@ type SearchResponse = {
 
 const SIDECAR_BASE_URL = "http://127.0.0.1:8765";
 const SIDECAR_HEALTH_URL = `${SIDECAR_BASE_URL}/health`;
+const SIDECAR_INDEX_STATUS_URL = `${SIDECAR_BASE_URL}/index/status`;
 const DEFAULT_LIMIT = 25;
 const DEFAULT_SEARCH_K = 20;
 
@@ -75,6 +85,7 @@ function toUtcIso(localDateTime: string): string | null {
 
 export default function App() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [indexStatus, setIndexStatus] = useState<IndexStatusResponse | null>(null);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [eventTotal, setEventTotal] = useState(0);
   const [query, setQuery] = useState("");
@@ -168,6 +179,7 @@ export default function App() {
       const searchUrl = buildSearchUrl(query, overrides);
       const requests: Promise<Response>[] = [
         fetch(SIDECAR_HEALTH_URL, { method: "GET" }),
+        fetch(SIDECAR_INDEX_STATUS_URL, { method: "GET" }),
         fetch(eventsUrl, { method: "GET" }),
       ];
       if (searchUrl) {
@@ -175,11 +187,15 @@ export default function App() {
       }
       const responses = await Promise.all(requests);
       const healthResponse = responses[0];
-      const eventsResponse = responses[1];
-      const searchResponse = responses.length > 2 ? responses[2] : null;
+      const indexStatusResponse = responses[1];
+      const eventsResponse = responses[2];
+      const searchResponse = responses.length > 3 ? responses[3] : null;
 
       if (!healthResponse.ok) {
         throw new Error(`Health HTTP ${healthResponse.status}`);
+      }
+      if (!indexStatusResponse.ok) {
+        throw new Error(`Index status HTTP ${indexStatusResponse.status}`);
       }
       if (!eventsResponse.ok) {
         throw new Error(`Events HTTP ${eventsResponse.status}`);
@@ -189,8 +205,10 @@ export default function App() {
       }
 
       const healthBody = (await healthResponse.json()) as HealthResponse;
+      const indexStatusBody = (await indexStatusResponse.json()) as IndexStatusResponse;
       const eventsBody = (await eventsResponse.json()) as EventsResponse;
       setHealth(healthBody);
+      setIndexStatus(indexStatusBody);
       setEvents(eventsBody.results);
       setEventTotal(eventsBody.total_estimate);
       if (searchResponse) {
@@ -205,6 +223,7 @@ export default function App() {
       }
     } catch (err) {
       setHealth(null);
+      setIndexStatus(null);
       setEvents([]);
       setEventTotal(0);
       setSearchMode(null);
@@ -256,6 +275,20 @@ export default function App() {
             <dd>{health.readiness.db_ready ? "ready" : "not ready"}</dd>
             <dt className="uppercase tracking-wide text-muted-foreground">Embedder</dt>
             <dd>{health.readiness.embedder_ready ? "ready" : "not ready"}</dd>
+          </dl>
+        )}
+        {indexStatus && (
+          <dl className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-2 border-t pt-3 text-sm">
+            <dt className="uppercase tracking-wide text-muted-foreground">Index Count</dt>
+            <dd>{indexStatus.indexed_event_count}</dd>
+            <dt className="uppercase tracking-wide text-muted-foreground">Embedder Model</dt>
+            <dd>{indexStatus.embedder_model_name}</dd>
+            <dt className="uppercase tracking-wide text-muted-foreground">Vector Store</dt>
+            <dd>{indexStatus.vector_store_ready ? "ready" : "not ready"}</dd>
+            <dt className="uppercase tracking-wide text-muted-foreground">Embedder Error</dt>
+            <dd>{indexStatus.embedder_last_error ?? "none"}</dd>
+            <dt className="uppercase tracking-wide text-muted-foreground">Vector Error</dt>
+            <dd>{indexStatus.vector_store_last_error ?? "none"}</dd>
           </dl>
         )}
       </section>

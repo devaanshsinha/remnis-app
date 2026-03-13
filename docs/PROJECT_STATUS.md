@@ -12,6 +12,7 @@
   - `POST /ingest` with schema/hash validation and dedupe/debounce
   - observer v1 active-window polling loop
   - `GET /observer/stats` degraded-state diagnostics
+  - `GET /index/status` embedder/vector-store readiness and indexed-count visibility
   - JSONL persistence (`sidecar/data/events.jsonl`)
   - `GET /events` filterable retrieval over persisted events
   - `GET /search` with vector-first retrieval and keyword fallback

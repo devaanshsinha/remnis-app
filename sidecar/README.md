@@ -6,6 +6,7 @@
 - `POST /ingest` endpoint is implemented with dedupe/debounce decisions.
 - `POST /ingest/browser` endpoint is available for browser adapter payloads.
 - `GET /observer/stats` endpoint is available for observer diagnostics.
+- `GET /index/status` endpoint is available for embedder/vector index visibility.
 - `GET /events` endpoint is available with filterable retrieval over persisted events.
 - `GET /search` endpoint is available as a keyword fallback over local persisted events.
 - Background observer loop is implemented (`app/observer.py`) and starts on app startup.
@@ -22,7 +23,7 @@
 - On startup, the sidecar backfills previously stored JSONL events into the vector index when embedder and LanceDB dependencies are available.
 
 ## Key Files
-- `app/main.py` - FastAPI app with health/ingest/stats/events/search endpoints and observer lifecycle
+- `app/main.py` - FastAPI app with health/ingest/stats/index/events/search endpoints and observer lifecycle
 - `app/observer.py` - active-window polling loop and event emission
 - `app/schemas.py` - canonical contracts and response models
 - `app/hash_utils.py` - SHA-256 context hash compute/verify helpers
@@ -44,6 +45,7 @@
 - `observer_ready` should become `true` when observer capture loop is functioning.
 - `db_ready` and `embedder_ready` now reflect actual sidecar dependency initialization state.
 - `/observer/stats` includes `observer_state` and `last_error_code` for degraded-state diagnostics.
+- `/index/status` exposes embedder readiness, vector-store readiness, indexed count, and last known dependency errors.
 - `/events` provides filterable recent-history retrieval for UI and debugging.
 - `/search` supports deterministic filters (`source`, `app_name`, `from_ts`, `to_ts`).
 - `/search` now attempts vector retrieval when the embedder and LanceDB store are ready, and falls back to keyword scoring otherwise.

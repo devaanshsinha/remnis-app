@@ -15,6 +15,7 @@ This describes the code that exists today, not future architecture.
   - `GET /health` returns status metadata and readiness flags.
   - `POST /ingest` validates event schema/hash and returns `stored/skipped` decisions.
   - `GET /observer/stats` returns observer runtime diagnostics.
+  - `GET /index/status` returns embedder/vector index readiness and indexed-count visibility.
   - `GET /search` returns keyword-ranked matches from persisted events.
 
 ### Current observer behavior (v1)

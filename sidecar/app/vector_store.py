@@ -82,6 +82,9 @@ class LocalVectorStore:
     def last_error(self) -> str | None:
         return self._status.last_error
 
+    def indexed_event_count(self) -> int:
+        return len(self._indexed_context_hashes)
+
     def has_context_hash(self, context_hash: str) -> bool:
         return context_hash in self._indexed_context_hashes
 

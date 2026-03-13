@@ -26,6 +26,7 @@ What to do:
 - Integrate the local background embedding model (`all-MiniLM-L6-v2`): startup scaffolding, conditional retrieval wiring, and startup backfill added, dependency install still pending.
 - Introduce LanceDB for vector storage/query: startup scaffolding, conditional retrieval wiring, and startup backfill added, dependency install still pending.
 - Replace keyword ranking in `/search` with semantic ranking: partially wired, blocked on local dependency installation.
+- Index/status visibility for runtime verification: completed.
 
 Why:
 - Keyword fallback is useful but limited for intent-level recall.

@@ -23,6 +23,7 @@ from .schemas import (
     EventsResponse,
     HealthReadiness,
     HealthResponse,
+    IndexStatusResponse,
     IngestRequest,
     IngestResponse,
     ObserverStatsResponse,
@@ -135,6 +136,20 @@ def observer_stats() -> ObserverStatsResponse:
                 else None
             ),
         )
+
+
+@app.get("/index/status", response_model=IndexStatusResponse)
+def index_status() -> IndexStatusResponse:
+    return IndexStatusResponse(
+        embedder_ready=_embedder.is_ready() if _embedder else False,
+        embedder_model_name=_embedder.model_name() if _embedder else "uninitialized",
+        embedder_last_error=_embedder.last_error() if _embedder else "embedder_not_started",
+        vector_store_ready=_vector_store.is_ready() if _vector_store else False,
+        vector_store_last_error=(
+            _vector_store.last_error() if _vector_store else "vector_store_not_started"
+        ),
+        indexed_event_count=_vector_store.indexed_event_count() if _vector_store else 0,
+    )
 
 
 def _tokenize_query(query: str) -> list[str]:

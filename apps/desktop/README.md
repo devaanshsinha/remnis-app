@@ -4,6 +4,7 @@
 - Vite + React + TypeScript app is running.
 - Tauri v2 scaffold is present and runnable.
 - Desktop UI calls sidecar `GET /health` and `GET /events`.
+- Desktop UI calls sidecar `GET /index/status` for indexing visibility.
 - UI shows a recent-events list from sidecar persistence.
 - UI supports client-driven `/events` filters for source, app name, and UTC time range.
 - UI calls `GET /search` with the same filters for query-time retrieval.
