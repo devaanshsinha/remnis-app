@@ -46,25 +46,10 @@ class LocalVectorStore:
             if table_exists:
                 self._table = self._db.open_table(VECTOR_TABLE_NAME)
             else:
-                self._table = self._db.create_table(
-                    VECTOR_TABLE_NAME,
-                    data=[
-                        {
-                            "id": "bootstrap",
-                            "timestamp_utc": "1970-01-01T00:00:00Z",
-                            "app_name": "bootstrap",
-                            "window_title": "bootstrap",
-                            "file_path": None,
-                            "context_text": "bootstrap",
-                            "context_hash": "bootstrap",
-                            "source": "bootstrap",
-                            "source_version": "event.v1",
-                            "embedding": [0.0, 0.0],
-                        }
-                    ],
-                )
-                self._table.delete("id = 'bootstrap'")
+                self._table = None
             self._load_manifest(reset=not table_exists)
+            if table_exists and not self._manifest_path.exists():
+                self._rebuild_manifest_from_table()
         except Exception as exc:
             self._status = VectorStoreStatus(
                 ready=False,
@@ -77,7 +62,7 @@ class LocalVectorStore:
         self._status = VectorStoreStatus(ready=True, last_error=None)
 
     def is_ready(self) -> bool:
-        return self._status.ready and self._table is not None
+        return self._status.ready and self._db is not None
 
     def last_error(self) -> str | None:
         return self._status.last_error
@@ -106,17 +91,52 @@ class LocalVectorStore:
             "source_version": event.source_version,
             "embedding": embedding,
         }
-        self._table.add([row])
+        self._add_row(row)
         self._indexed_context_hashes.add(event.context_hash)
         self._append_manifest_entry(event.context_hash)
         return True
 
     def search_similar(self, embedding: list[float], limit: int) -> list[dict[str, Any]]:
-        if not self.is_ready():
+        if not self.is_ready() or self._table is None:
             raise RuntimeError("vector_store_not_ready")
 
         rows = self._table.search(embedding).limit(limit).to_list()
         return [dict(row) for row in rows]
+
+    def _add_row(self, row: dict[str, Any]) -> None:
+        if self._db is None:
+            raise RuntimeError("vector_store_not_ready")
+
+        embedding = row["embedding"]
+        if self._table is None:
+            self._table = self._db.create_table(VECTOR_TABLE_NAME, data=[row])
+            return
+
+        expected_dimension = self._embedding_dimension()
+        actual_dimension = len(embedding)
+        if expected_dimension is not None and expected_dimension != actual_dimension:
+            if self._table.count_rows() != 0:
+                raise RuntimeError(
+                    f"embedding_dimension_mismatch:{expected_dimension}:{actual_dimension}"
+                )
+
+            self._db.drop_table(VECTOR_TABLE_NAME)
+            self._table = self._db.create_table(VECTOR_TABLE_NAME, data=[row])
+            self._indexed_context_hashes = set()
+            if self._manifest_path.exists():
+                self._manifest_path.unlink()
+            return
+
+        self._table.add([row])
+
+    def _embedding_dimension(self) -> int | None:
+        if self._table is None:
+            return None
+        try:
+            field = self._table.schema.field("embedding")
+        except (KeyError, ValueError):
+            return None
+        return getattr(field.type, "list_size", None)
 
     def _load_manifest(self, reset: bool) -> None:
         if reset:
@@ -136,6 +156,26 @@ class LocalVectorStore:
                 if context_hash:
                     hashes.add(context_hash)
         self._indexed_context_hashes = hashes
+
+    def _rebuild_manifest_from_table(self) -> None:
+        if self._table is None:
+            self._indexed_context_hashes = set()
+            return
+
+        arrow_table = self._table.to_arrow()
+        hashes = {
+            str(value)
+            for value in arrow_table.column("context_hash").to_pylist()
+            if value
+        }
+        self._indexed_context_hashes = hashes
+        if not hashes:
+            return
+
+        with self._manifest_path.open("w", encoding="utf-8") as handle:
+            for context_hash in sorted(hashes):
+                handle.write(context_hash)
+                handle.write("\n")
 
     def _append_manifest_entry(self, context_hash: str) -> None:
         with self._manifest_path.open("a", encoding="utf-8") as handle:

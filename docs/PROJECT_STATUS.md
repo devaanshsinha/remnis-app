@@ -19,6 +19,7 @@
   - browser repeat-window suppression for rapid duplicate extension emissions
   - startup-time embedder and LanceDB vector-store initialization scaffolding
   - startup backfill from JSONL into the vector index when dependencies are available
+  - vector index self-repair for older empty wrong-dimension tables and manifest rebuild for indexed-count recovery
 - Implemented desktop runtime baseline and UI foundation.
 
 ## Current Intent

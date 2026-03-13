@@ -32,6 +32,8 @@ This describes the code that exists today, not future architecture.
 - Browser ingest applies a short repeat window keyed by browser tab context so rapid duplicate extension emissions are skipped.
 - Sidecar now attempts to initialize the local embedder and LanceDB-backed vector store on startup.
 - If the embedder and vector store are ready, sidecar backfills stored JSONL events into the vector index on startup.
+- If an older empty vector table exists with the wrong embedding width, sidecar repairs it during the next successful index write so semantic indexing can recover without manual table cleanup.
+- If the vector table exists but the local manifest file is missing, sidecar rebuilds indexed-count bookkeeping from the table contents on startup.
 - If model/vector dependencies are missing, ingest still works and readiness remains degraded.
 
 ### Current search behavior
