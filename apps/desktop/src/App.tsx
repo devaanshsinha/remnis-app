@@ -44,6 +44,7 @@ type SearchResult = {
 
 type SearchResponse = {
   query: string;
+  mode: string;
   k: number;
   offset: number;
   total_estimate: number;
@@ -77,6 +78,7 @@ export default function App() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [eventTotal, setEventTotal] = useState(0);
   const [query, setQuery] = useState("");
+  const [searchMode, setSearchMode] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searchTotal, setSearchTotal] = useState(0);
   const [appFilter, setAppFilter] = useState("");
@@ -193,9 +195,11 @@ export default function App() {
       setEventTotal(eventsBody.total_estimate);
       if (searchResponse) {
         const searchBody = (await searchResponse.json()) as SearchResponse;
+        setSearchMode(searchBody.mode);
         setSearchResults(searchBody.results);
         setSearchTotal(searchBody.total_estimate);
       } else {
+        setSearchMode(null);
         setSearchResults([]);
         setSearchTotal(0);
       }
@@ -203,6 +207,7 @@ export default function App() {
       setHealth(null);
       setEvents([]);
       setEventTotal(0);
+      setSearchMode(null);
       setSearchResults([]);
       setSearchTotal(0);
       const raw = err instanceof Error ? err.message : "Unknown error";
@@ -344,7 +349,7 @@ export default function App() {
                 Search Results
               </h2>
               <p className="text-xs text-muted-foreground">
-                showing {searchResults.length} of {searchTotal}
+                {searchMode ?? "keyword_fallback"} · showing {searchResults.length} of {searchTotal}
               </p>
             </div>
             {searchResults.length === 0 && !error && <p className="text-sm">No matching events.</p>}

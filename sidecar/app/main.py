@@ -486,6 +486,7 @@ def search(
 
     app_name_normalized = app_name.strip().lower() if app_name else None
     scored: list[tuple[float, str, dict[str, Any]]] = []
+    search_mode = "keyword_fallback"
 
     if _embedder and _vector_store and _embedder.is_ready() and _vector_store.is_ready():
         try:
@@ -522,6 +523,8 @@ def search(
                 if score <= 0:
                     continue
                 scored.append((score, str(event.timestamp_utc), event_dump))
+            if scored:
+                search_mode = "semantic"
         except Exception:
             scored = []
 
@@ -565,6 +568,7 @@ def search(
 
     return SearchResponse(
         query=query,
+        mode=search_mode,
         k=k,
         offset=offset,
         total_estimate=total_estimate,

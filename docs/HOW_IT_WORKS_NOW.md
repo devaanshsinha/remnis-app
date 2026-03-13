@@ -39,7 +39,7 @@ This describes the code that exists today, not future architecture.
   - `app_name`
   - `window_title`
   - `context_text`
-- Results are returned in contract-shaped form with score and pagination.
+- Results are returned in contract-shaped form with score, pagination, and active search mode.
 
 ## 3. Tauri Layer (`apps/desktop/src-tauri`)
 - Minimal Tauri v2 scaffold exists:

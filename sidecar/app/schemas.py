@@ -128,6 +128,7 @@ class SearchResult(BaseModel):
 class SearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
     query: str
+    mode: str
     k: int
     offset: int
     total_estimate: int

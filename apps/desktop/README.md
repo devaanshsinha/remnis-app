@@ -7,6 +7,7 @@
 - UI shows a recent-events list from sidecar persistence.
 - UI supports client-driven `/events` filters for source, app name, and UTC time range.
 - UI calls `GET /search` with the same filters for query-time retrieval.
+- UI shows which search mode produced the current results (`semantic` or `keyword_fallback`).
 - Tailwind + shadcn-style foundation is configured.
 - Final desktop behavior is intended to surface both:
   - fast local retrieval from the embedding/vector pipeline

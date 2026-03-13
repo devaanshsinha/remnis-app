@@ -47,5 +47,6 @@
 - `/events` provides filterable recent-history retrieval for UI and debugging.
 - `/search` supports deterministic filters (`source`, `app_name`, `from_ts`, `to_ts`).
 - `/search` now attempts vector retrieval when the embedder and LanceDB store are ready, and falls back to keyword scoring otherwise.
+- `/search` reports its active mode (`semantic` or `keyword_fallback`) in the response payload.
 - The finished product also requires a second local query-time reasoning layer on top of retrieval.
 - `/ingest/browser` maps browser events into canonical ingest events and reuses dedupe/debounce.
